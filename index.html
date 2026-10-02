@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="assets/chessground.css" />
+    <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/main.css" />
+    <link rel="stylesheet" href="assets/decks.css" />
+    <link rel="stylesheet" href="assets/viewer.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  </head>
+  <body>
+    <div id="puzzlebox">
+      <div id="preboard">
+	  <div class="preboard-top">
+          	<div class="preboard-left"></div>
+                <div class="preboard-right"></div>
+	  </div>
+	  <div class="preboard-middle"></div>
+      </div>
+      <div id="board"></div>
+      <div id="postboard"></div>
+      <div id="promotion">
+          <button class="promotion-piece" data-piece="q"></button>
+          <button class="promotion-piece" data-piece="r"></button>
+          <button class="promotion-piece" data-piece="b"></button>
+          <button class="promotion-piece" data-piece="n"></button>
+      </div>
+    </div>
+    <script src="dist/chess-puzzler.js"></script>
+    <script>
+      ChessPuzzler.run(document.getElementById("board"));
+    </script>
+  </body>
+</html>

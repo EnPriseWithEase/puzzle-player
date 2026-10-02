@@ -1,0 +1,278 @@
+/* ==========================================================================
+   Font Definitions
+   ========================================================================== */
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 400;
+  src: url("./fonts/Roboto-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 700;
+  src: url("./fonts/Roboto-Bold.ttf") format("truetype");
+}
+
+/* ==========================================================================
+   Global & Base Layout
+   ========================================================================== */
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#puzzlebox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100vh;
+  background: #2c2c2c;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   Chess Board & Container
+   ========================================================================== */
+
+#board {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+#board section {
+  position: relative;
+  box-sizing: content-box;
+  border: 4px solid var(--board-border-color, #ffffff);
+  border-radius: 2px;
+  width: min(calc(100% - 24px), calc(100vh - 184px));
+  aspect-ratio: 1 / 1;
+}
+
+#board .cg-wrap {
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   Pawn Promotion Popup
+   ========================================================================== */
+
+#promotion {
+  position: absolute;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: calc(100vmin * 0.01);
+  gap: calc(100vmin * 0.01);
+  border-radius: 6px;
+  background: rgba(60, 60, 60, 0.95);
+}
+
+#promotion.visible {
+  display: flex;
+}
+
+.promotion-piece {
+  width: calc(100vmin * 0.1);
+  height: calc(100vmin * 0.1);
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: #737373;
+  cursor: pointer;
+}
+
+.promotion-piece img {
+  width: 100%;
+  height: 100%;
+}
+
+.promotion-piece:hover {
+  background: #d6d6d6;
+}
+
+.promotion-piece:active {
+  background: #557d38;
+}
+
+/* ==========================================================================
+   Footer Controls & Postboard
+   ========================================================================== */
+
+#buttons-container {
+  height: 68px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+#postboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 100%;
+  height: 56px; /* Explicit height keeps layout static even when empty */
+  padding: 6px;
+  box-sizing: border-box;
+  background: #2c2c2c;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Preboard Header (2-Row Layout)
+   ========================================================================== */
+
+#preboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  height: 100px; /* Locked height prevents board jumping during state updates */
+  padding: 8px 0px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background: #2c2c2c;
+  overflow: hidden;
+}
+
+/* Row 1 Container */
+.preboard-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.preboard-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preboard-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* Row 2 Container */
+.preboard-middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px; /* Reserves space when empty to prevent collapsing */
+  padding: 0;
+}
+
+/* Button takes up centered space naturally */
+#preboard .continueBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 16px;
+  border: 1px solid #111;
+  border-radius: 4px;
+  background: #242424;
+  color: #d7dee9;
+  font-family: "Roboto", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.1s ease,
+    color 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+#preboard .continueBtn:hover {
+  background: #d6d6d6;
+  color: #333;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+#preboard .continueBtn:active {
+  background: #557d38;
+  color: #ffffff;
+}
+
+#preboard .continueBtn:focus-visible {
+  outline: 2px solid #7fb069;
+  outline-offset: 1px;
+}
+
+/* Menu & Text Styles */
+
+#menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.menu-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #d7dee9;
+  font-size: 22px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-item:active {
+  background: #557d38;
+}
+
+#puzzle-timer {
+  color: #d7dee9;
+  font-family: "Roboto", sans-serif;
+  font-size: clamp(14px, 3.8vw, 18px);
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+#puzzle-id {
+  color: #a0a0a0;
+  font-family: "Roboto", sans-serif;
+  font-size: clamp(11px, 2.8vw, 13px);
+  font-weight: 400;
+  line-height: 1.1;
+  white-space: nowrap;
+}
