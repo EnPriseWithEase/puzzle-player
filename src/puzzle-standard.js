@@ -15,6 +15,7 @@ let viewSolutionButtonClicked;
 let advanceButton;
 let currentAbortSignal = null;
 let onAbortListener = null;
+let isProcessingMove = false;
 
 export function runPuzzle(el, loadedPgn, options = {}) {
   return new Promise(resolve => {
@@ -60,9 +61,10 @@ export function runPuzzle(el, loadedPgn, options = {}) {
 
         events: {
           after(orig, dest) {
-
+	    isProcessingMove = true;
             handleMoveWithPromotion(chess, orig, dest, handleMove);
-
+	    // runs after events: select(dest) below to prevent move from being attempted twice
+            setTimeout(() => { isProcessingMove = false; }, 0);
           },
         },
       },
@@ -72,7 +74,10 @@ export function runPuzzle(el, loadedPgn, options = {}) {
       },
       events: {
         select(dest) {
-          handleClickMoveWithPromotion(chess, cg, dest, handleMove);
+          setTimeout(() => { // ensures this runs after events: after(orig, dest)
+            if (isProcessingMove) return;
+            handleClickMoveWithPromotion(chess, cg, dest, handleMove);
+	  }, 0);
         }
       },
     });
@@ -82,8 +87,12 @@ export function runPuzzle(el, loadedPgn, options = {}) {
     //  cg.redraw();
     //});
 
-    const board = el.querySelector("cg-board");
-    board.classList.add(`border-${cgTurnColor(chess)}`);
+
+    const boardSection = document.querySelector("#board section"); 
+    boardSection.classList.remove("border-white", "border-black");
+    boardSection.classList.add(`border-${cgTurnColor(chess)}`);
+    //const board = el.querySelector("cg-board");
+    //board.classList.add(`border-${cgTurnColor(chess)}`);
 
     advanceButton = createViewSolutionButton(
       onViewSolution,
@@ -276,5 +285,9 @@ function onAbort() {
   if (resolvePuzzle) {
     resolvePuzzle();
   }
+}
+
+export function getFen() {
+  return chess.fen();
 }
 

@@ -1,18 +1,14 @@
 import { exportDatabase } from "./database";
-import {
-  getDeckPuzzles,
-  getDecks,
-  writeReview,
-  updateDeckPuzzleStatus,
-} from "./database-usage";
+import { getDeckPuzzles, getDecks, writeReview, updateDeckPuzzleStatus, } from "./database-usage";
 import { loadPgn } from "./pgn";
-import { runPuzzle } from "./puzzle-standard";
-import { runCandidatePuzzle } from "./puzzle-candidates";
-import { runViewer } from "./puzzle-viewer";
+import { runPuzzle, getFen as getStandardFen } from "./puzzle-standard";
+import { runCandidatePuzzle, getFen as getCandidatesFen } from "./puzzle-candidates";
+import { runViewer, getFen as getViewerFen } from "./puzzle-viewer";
 import { createPuzzleTimer, startPuzzleTimer } from "./timer";
 import { initAudio, setAudioMuted, isAudioMuted } from "./audio";
 import { showDeckPicker } from "./deck-selection";
 import { reviewSession } from "./review";
+import { dbQuery } from "./database.js";
 
 let puzzles = [];
 let puzzleIndex = 0;
@@ -20,11 +16,31 @@ let currentDeckId = null;
 let currentDeckConfig = null;
 let puzzleSession = 0;
 let currentAbortController = null;
+let puzzleID = null;
+let getCurrentFen = null;
+
 
 export async function run(element) {
   initAudio(false);
 
   createMenu(element);
+
+  puzzleID = Number( new URLSearchParams(window.location.search).get("puzzle"));
+
+  if (puzzleID) {
+    puzzles = await dbQuery(
+      `SELECT id, pgn FROM puzzle WHERE id = ?`,
+      { params: [puzzleID] }
+    );
+
+    currentDeckConfig = { puzzle_type: "standard", retain: "all" };
+
+    puzzleIndex = 0;
+    const session = ++puzzleSession;
+
+    await startPuzzles(element, session);
+    return;
+  }
 
   await showDeckPicker(element, startDeck);
 }
@@ -121,9 +137,11 @@ async function startPuzzles(element, session) {
     };
 
     if (currentDeckConfig.puzzle_type === "candidates") {
+      getCurrentFen = getCandidateFen;
       await runCandidatePuzzle(cgWrap, pgn, {onViewSolution, abortSignal});
 
     } else if (currentDeckConfig.puzzle_type === "standard") {
+      getCurrentFen = getStandardFen;
       await runPuzzle(cgWrap, pgn, {onViewSolution,abortSignal});
 
     }
@@ -140,6 +158,8 @@ async function startPuzzles(element, session) {
 
     console.log("REVIEW:", review);
 
+    getCurrentFen = getViewerFen;
+
     await writeReview(review);
 
     await updatePuzzleStatus(puzzle.id, review);
@@ -150,7 +170,10 @@ async function startPuzzles(element, session) {
 
     if (session !== puzzleSession || abortSignal.aborted) return;
 
+    //wrapper for debugging
+    if (!puzzleID) {
     puzzleIndex++;
+    }
   }
 
   if (session === puzzleSession) {
@@ -206,9 +229,15 @@ function createMenu(element) {
   const decksButton = document.createElement("button");
   decksButton.type = "button";
   decksButton.className = "menu-item";
-  decksButton.textContent = "♟";
+  //decksButton.textContent = "\u{265F}";
+  //decksButton.textContent = "\u{1F0A0}";
+  //decksButton.textContent = "♟";
   decksButton.setAttribute("aria-label", "Decks");
   decksButton.title = "Decks";
+  const decksButtonIcon = document.createElement("span");
+  decksButtonIcon.className = "material-icons md-small playing-cards-icon";
+  decksButtonIcon.textContent = "playing_cards";
+  decksButton.appendChild(decksButtonIcon);
 
   decksButton.addEventListener("click", async () => {
     await showDeckPicker(element, startDeck);
@@ -221,7 +250,8 @@ function createMenu(element) {
   function updateAudioButton() {
     const muted = isAudioMuted();
 
-    audioButton.textContent = muted ? "🔇" : "🔊";
+    audioButton.textContent = muted ? "\u{1F507}" : "\u{1F50A}";
+    //audioButton.textContent = muted ? "🔇" : "🔊";
     audioButton.setAttribute(
       "aria-label",
       muted ? "Unmute audio" : "Mute audio"
@@ -239,7 +269,8 @@ function createMenu(element) {
   const exportButton = document.createElement("button");
   exportButton.type = "button";
   exportButton.className = "menu-item";
-  exportButton.textContent = "💾";
+  exportButton.textContent = "\u{1F4BE}";
+  //exportButton.textContent = "💾";
   exportButton.setAttribute("aria-label", "Export database");
   exportButton.title = "Export database";
 
@@ -247,9 +278,29 @@ function createMenu(element) {
     await exportDatabase();
   });
 
+  const lichessButton = document.createElement("button");
+  lichessButton.type = "button";
+  lichessButton.className = "menu-item";
+  //lichessButton.textContent = "\u{265E}";
+  //lichessButton.textContent = "♞";
+  const lichessIcon = document.createElement("img");
+  lichessIcon.src = "assets/images/lichess.svg";
+  lichessIcon.className = "lichess-icon";
+  lichessButton.appendChild(lichessIcon);
+
+  lichessButton.setAttribute("aria-label", "Open Lichess analysis");
+  lichessButton.title = "Open Lichess analysis";
+
+  lichessButton.addEventListener("click", () => {
+      const fen = getCurrentFen();
+      const url = `https://lichess.org/analysis/standard/${encodeURIComponent(fen)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+  });
+
   menu.appendChild(decksButton);
   menu.appendChild(audioButton);
   menu.appendChild(exportButton);
+  menu.appendChild(lichessButton);
 
   preboardLeft.appendChild(menu);
 }

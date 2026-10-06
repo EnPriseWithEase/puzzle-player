@@ -5,9 +5,9 @@ export default {
   input: "src/main.js",
   output: [
     {
-      file: "dist/chess-puzzler.js",
+      file: "dist/puzzle-player.js",
       format: "iife",
-      name: "ChessPuzzler",
+      name: "PuzzlePlayer",
     },
   ],
   plugins: [

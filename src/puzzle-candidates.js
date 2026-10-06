@@ -19,17 +19,18 @@ let foundCandidates;
 let shapes;
 let marginalMoves;
 let advanceButton;
-let currentSignal = null;
+let currentAbortSignal = null;
 let onAbortListener = null;
+let isProcessingMove = false;
 
 export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
   return new Promise(resolve => {
 
     console.log("IN PUZZLE-CANDIDATES");
 
-    currentSignal = signal;
+    currentAbortSignal = signal;
 
-    if (currentSignal?.aborted) {
+    if (currentAbortSignal?.aborted) {
       resolve();
       return;
     }
@@ -52,7 +53,7 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
     foundCandidates = new Set();
     shapes = [];
 
-    if (currentSignal) {
+    if (currentAbortSignal) {
       onAbortListener = onAbort;
       signal.addEventListener("abort", onAbortListener, { once: true });
     }
@@ -74,9 +75,10 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
 
         events: {
           after(orig, dest) {
-
+            isProcessingMove = true;
             handleMoveWithPromotion(chess, orig, dest, handleMove);
-
+            // runs after events: select(dest) below to prevent move from being attempted twice
+            setTimeout(() => { isProcessingMove = false; }, 0);
           },
         },
       },
@@ -87,13 +89,19 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
 
       events: {
         select(dest) {
-          handleClickMoveWithPromotion(chess, cg, dest, handleMove);
+          setTimeout(() => { // ensures this runs after events: after(orig, dest)
+            if (isProcessingMove) return;
+            handleClickMoveWithPromotion(chess, cg, dest, handleMove);
+          }, 0);
         }
       },
     });
 
-    const board = el.querySelector("cg-board");
-    board.classList.add(`border-${cgTurnColor(chess)}`);
+    const boardSection = document.querySelector("#board section");
+    boardSection.classList.remove("border-white", "border-black");
+    boardSection.classList.add(`border-${cgTurnColor(chess)}`);
+    //const board = el.querySelector("cg-board");
+    //board.classList.add(`border-${cgTurnColor(chess)}`);
 
     window.chess = chess;
     window.cg = cg;
@@ -101,8 +109,8 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
     advanceButton = createViewSolutionButton(
       onViewSolution,
       () => {
-        if (currentSignal && onAbortListener) {
-          currentSignal.removeEventListener("abort", onAbortListener);
+        if (currentAbortSignal && onAbortListener) {
+          currentAbortSignal.removeEventListener("abort", onAbortListener);
         }
         cleanup();
         console.log("CANDIDATES CHESSGROUND DESTROYED - VIEW SOLUTION BUTTON");
@@ -209,7 +217,7 @@ function findMatchingMarginalMove(orig, dest, promotion) {
 
 function handleMove(orig, dest, promotion = undefined) {
 
-  if (currentSignal?.aborted) return;
+  if (currentAbortSignal?.aborted) return;
 
   const index = findMatchingChildIndex(orig, dest, promotion);
 
@@ -322,12 +330,12 @@ function isSolved() {
 
 function finishPuzzle() {
 
-  if (currentSignal?.aborted) return;
+  if (currentAbortSignal?.aborted) return;
 
   console.log("Found candidates:", foundCandidates);
 
-  if (currentSignal && onAbortListener) {
-    currentSignal.removeEventListener("abort", onAbortListener);
+  if (currentAbortSignal && onAbortListener) {
+    currentAbortSignal.removeEventListener("abort", onAbortListener);
   }
 
   cleanup();
@@ -365,5 +373,9 @@ function onAbort() {
   if (resolvePuzzle) {
     resolvePuzzle();
   }
+}
+
+export function getFen() {
+  return chess.fen();
 }
 

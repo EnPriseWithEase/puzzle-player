@@ -13,6 +13,7 @@ let resolvePuzzle;
 let advanceButton = null;
 let currentAbortSignal;
 let onAbortListener = null;
+let isProcessingMove = false;
 
 export function runViewer(el, loadedPgn, options={}, signal = null) {
   return new Promise(resolve => {
@@ -55,7 +56,10 @@ export function runViewer(el, loadedPgn, options={}, signal = null) {
 
         events: {
           after(orig, dest) {
+            isProcessingMove = true;
             handleMoveWithPromotion(chess, orig, dest, handleMove);
+            // runs after events: select(dest) below to prevent move from being attempted twice
+            setTimeout(() => { isProcessingMove = false; }, 0);
           },
         },
       },
@@ -66,7 +70,10 @@ export function runViewer(el, loadedPgn, options={}, signal = null) {
 
       events: {
         select(dest) {
-          handleClickMoveWithPromotion(chess, cg, dest, handleMove);
+          setTimeout(() => { // ensures this runs after events: after(orig, dest)
+            if (isProcessingMove) return;
+            handleClickMoveWithPromotion(chess, cg, dest, handleMove);
+          }, 0);
         }
       },
 
@@ -78,8 +85,11 @@ export function runViewer(el, loadedPgn, options={}, signal = null) {
       },
     });
 
-    const board = el.querySelector("cg-board");
-    board.classList.add(`border-${cgTurnColor(chess)}`);
+    const boardSection = document.querySelector("#board section");
+    boardSection.classList.remove("border-white", "border-black");
+    boardSection.classList.add(`border-${cgTurnColor(chess)}`);
+    //const board = el.querySelector("cg-board");
+    //board.classList.add(`border-${cgTurnColor(chess)}`);
 
     window.cg = cg;
 
@@ -302,31 +312,30 @@ function createNavigation() {
 
     <button
       class="navBtn"
-      id="openLichessAnalysis"
-      title="Copy FEN to clipboard OR Open Lichess Analysis"
-      aria-label="Copy FEN to clipboard OR Open Lichess Analysis"
-    >
-      <span class="material-icons md-small">content_copy</span>
-    </button>
-
-    <button
-      class="navBtn"
       id="stockfishToggle"
       title="Computer Analysis"
       aria-label="Computer Analysis"
     >
-      <span class="material-icons md-small">developer_board_off</span>
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+        <g transform="translate(0, 80)">
+          <path transform="matrix(1.4, 0, 0, 1.83, -188, 387)" d="M410-420q74 0 142.5-26T672-526q6 42 44 64t84 22v-200q-46 0-84 22.5T672-552q-53-52-120.5-80T410-660q-79 0-152 27.5T140-540q45 65 118 92.5T410-420Z"/>
+          <circle cx="240" cy="-660" r="60" fill="#1c2128"/>
+          <circle cx="220" cy="-680" r="20" fill="#ffffff"/>
+        </g>
+      </svg>
     </button>
-
+    `;
+/*
     <button
       class="navBtn"
       id="rotateBoard"
       title="Flip board"
       aria-label="Flip board"
     >
-      <span class="flipBoardIcon material-icons md-small">flip</span>
+      <span class="flipBoardIcon material-icons md-small">sync</span>
     </button>
   `;
+*/
 
   buttons
     .querySelector("#resetBoard")
@@ -340,17 +349,17 @@ function createNavigation() {
     .querySelector("#navForward")
     .addEventListener("click", moveForward);
 
-  buttons
-    .querySelector("#openLichessAnalysis")
-    .addEventListener("click", openLichessAnalysis);
+//  buttons
+//    .querySelector("#openLichessAnalysis")
+//    .addEventListener("click", openLichessAnalysis);
 
   buttons
     .querySelector("#stockfishToggle")
     .addEventListener("click", toggleAnalysis);
 
-  buttons
-    .querySelector("#rotateBoard")
-    .addEventListener("click", rotateBoard);
+//  buttons
+//    .querySelector("#rotateBoard")
+//    .addEventListener("click", rotateBoard);
 }
 
 
@@ -500,5 +509,9 @@ function onAbortViewer() {
   if (resolvePuzzle) {
     resolvePuzzle();
   }
+}
+
+export function getFen() {
+  return chess.fen();
 }
 

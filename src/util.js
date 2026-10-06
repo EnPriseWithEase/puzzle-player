@@ -3,9 +3,15 @@ import { Chess, SQUARES } from "chess.js";
 const promotion = document.getElementById("promotion");
 
 export function handleClickMoveWithPromotion(chess, cg, dest, onMove) {
+
+  console.log("CLICK MOVE SELECT", { dest, selected: cg.state.selected, });
+
   const orig = getUniqueOrigForDest(chess, dest);
 
-  if (!orig) {
+  if (!orig) return;
+
+  if (!isLegalMove(chess, orig, dest)) {
+    console.log("CLICK MOVE: invalid move:", { orig, dest });
     return;
   }
 
@@ -75,6 +81,11 @@ export function legalDests(chess) {
       );
   });
   return dests;
+}
+
+export function isLegalMove(chess, orig, dest) {
+  const legalMoves = chess.moves({ square: orig, verbose: true });
+  return legalMoves.some(m => m.to === dest);
 }
 
 export function cgTurnColor(chess) {

@@ -1,0 +1,31 @@
+build
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+www/
+
+# Android/Gradle build output
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/.cxx/
+
+# Local Android/IDE files
+android/local.properties
+android/.idea/
+*.iml
+
+# Signing / secrets
+*.keystore
+*.jks
+*.p12
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
