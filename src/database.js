@@ -1,10 +1,14 @@
 import initSqlJs from "sql.js";
+import { Capacitor, registerPlugin } from "@capacitor/core";
+
 
 let databasePromise;
 
 const DB_NAME = "puzzle-database";
 const STORE_NAME = "database";
 const DB_KEY = "sqlite";
+
+const DownloadFile = registerPlugin("DownloadFile");
 
 export function getDatabase() {
   if (!databasePromise) {
@@ -110,9 +114,24 @@ async function saveToIndexedDB(database) {
 
 export async function exportDatabase() {
   const db = await getDatabase();
-
   const data = db.export();
 
+  const filename = "puzzle.sqlite.bak";
+
+  if (Capacitor.getPlatform() === "android") {
+    const base64Data = uint8ArrayToBase64(data);
+
+    const result = await DownloadFile.saveToDownloads({
+      filename,
+      data: base64Data,
+    });
+
+    console.log("Database exported to Downloads:", result.uri);
+
+    return result;
+  }
+
+  // Browser download
   const blob = new Blob([data], {
     type: "application/x-sqlite3",
   });
@@ -121,18 +140,29 @@ export async function exportDatabase() {
 
   const link = document.createElement("a");
   link.href = url;
-  link.download = "puzzle.sqlite.bak";
+  link.download = filename;
 
   document.body.appendChild(link);
   link.click();
   link.remove();
 
-  // timeout wrapper to help with potential mobile browser issues
   setTimeout(() => {
     URL.revokeObjectURL(url);
   }, 1000);
 }
 
+function uint8ArrayToBase64(data) {
+  let binary = "";
+  const chunkSize = 0x8000;
+
+  for (let i = 0; i < data.length; i += chunkSize) {
+    binary += String.fromCharCode(
+      ...data.subarray(i, i + chunkSize)
+    );
+  }
+
+  return btoa(binary);
+}
 
 export async function dbQuery(sql, { params = [], jsonColumns = [] } = {}) {
   const db = await getDatabase();
