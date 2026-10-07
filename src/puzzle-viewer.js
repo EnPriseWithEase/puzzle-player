@@ -350,24 +350,32 @@ function createNavigation() {
   lichessButton.title = "Open Lichess Analysis";
   lichessButton.setAttribute("aria-label", "Open Lichess Analysis");
 
-  const lichessIcon = document.createElement("img");
-  lichessIcon.src = "assets/images/lichess.svg";
-  lichessIcon.className = "lichess-icon";
-  lichessButton.appendChild(lichessIcon);
+  //const lichessIcon = document.createElement("img");
+  //lichessIcon.src = "assets/images/lichess.svg";
+  //lichessIcon.className = "lichess-icon";
+  //lichessButton.appendChild(lichessIcon);
+
+  fetch("assets/images/lichess.svg")
+    .then((response) => response.text())
+    .then((svgText) => {
+      lichessButton.innerHTML = svgText;
+      const svgEl = lichessButton.querySelector("svg");
+        svgEl.classList.add("lichess-icon");
+    })
 
   const stockfishButton = document.createElement("button");
   stockfishButton.className = "navBtn";
   stockfishButton.id = "stockfishToggle";
   stockfishButton.title = "Computer Analysis";
   stockfishButton.setAttribute("aria-label", "Computer Analysis");
-  stockfishButton.innerHTML = `
-   <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
-        <g transform="translate(0, 80)">
-          <path fill="none" stroke="currentColor" stroke-width="40" transform="matrix(1.4, 0, 0, 1.83, -188, 387)" d="M410-420q74 0 142.5-26T672-526q6 42 44 64t84 22v-200q-46 0-84 22.5T672-552q-53-52-120.5-80T410-660q-79 0-152 27.5T140-540q45 65 118 92.5T410-420Z"/>
-          <circle cx="240" cy="-660" r="60" fill="#1c2128"/>
-          <circle cx="220" cy="-680" r="20" fill="#ffffff"/>
-        </g>
-    </svg>`;
+
+  fetch("assets/images/stockfish.svg")
+    .then((response) => response.text())
+    .then((svgText) => {
+      stockfishButton.innerHTML = svgText;
+      const svgEl = lichessButton.querySelector("svg");
+        svgEl.classList.add("stockfish-icon");
+    })
 
   buttons.appendChild(resetBoardButton);
   buttons.appendChild(navBackwardButton);

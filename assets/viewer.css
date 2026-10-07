@@ -35,15 +35,7 @@
    Navigation Buttons
    ========================================================================== */
 
-/*
- * #postboard itself is laid out by the main stylesheet.
- *
- * These rules only control the four navigation buttons created by
- * viewer.js.
- *
- * The buttons remain perfectly square and use as much of the available
- * horizontal space as possible without overflowing.
- */
+/* #postboard itself is laid out by the main stylesheet.  */
 
 button.navBtn {
   display: flex;
@@ -57,7 +49,6 @@ button.navBtn {
 
   aspect-ratio: 1 / 1;
 
-/*  max-width: 72px; */
   max-height: calc(100% - 12px);
   height: auto;
 
@@ -91,21 +82,41 @@ button.navBtn:last-child {
   margin-right: 0;
 }
 
-button.navBtn:hover:not(:disabled) {
-  background: #d6d6d6;
-  color: #333;
-
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+/* Ensure SVG fills/strokes inherit color and transition smoothly */
+button.navBtn svg,
+button.navBtn svg.lichess-icon,
+button.navBtn svg.lichess-icon path {
+  fill: currentColor;
+  stroke: currentColor;
+  transition: fill 0.1s ease, stroke 0.1s ease;
 }
 
+/* hover state only for desktop/prevents persistent hover on android */
+@media (hover: hover) {
+  button.navBtn:hover:not(:disabled) {
+    background: #d6d6d6;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* instant tactile feedback for desktop click and mobile tap */
 button.navBtn:active:not(:disabled) {
   background: #557d38;
   color: #fff;
 }
 
+/* keyboard focus ring only (mouse clicks won't leave persistent outline) */
 button.navBtn:focus-visible {
   outline: 2px solid #7fb069;
   outline-offset: 1px;
+}
+
+/* reset mouse click focus back to default background */
+button.navBtn:focus:not(:focus-visible) {
+  outline: none;
+  background: #242424;
+  color: #d7dee9;
 }
 
 button.navBtn:disabled {
