@@ -7,8 +7,7 @@
   font-style: normal;
   font-weight: 400;
 /*  src: url("./fonts/_materialicons.woff2") format("woff2"); */
-  src: url("./fonts/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].woff2")
-    format("woff2");
+  src: url("./fonts/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].woff2") format("woff2");
 }
 
 .material-icons {
@@ -32,36 +31,66 @@
 }
 
 /* ==========================================================================
-   Navigation Buttons
+   Navigation Buttons Container
    ========================================================================== */
 
 /*
- * #postboard itself is laid out by the main stylesheet.
+ * The postboard contains four buttons.
  *
- * These rules only control the four navigation buttons created by
- * viewer.js.
+ * Each button is kept perfectly square and is allowed to grow as the
+ * postboard gets taller, but it can never become so wide that the four
+ * buttons no longer fit across the screen.
  *
- * The buttons remain perfectly square and use as much of the available
- * horizontal space as possible without overflowing.
+ * The actual size is determined by:
+ *
+ *   1. available postboard height
+ *   2. available postboard width / 4
+ *
+ * The CSS variable below is calculated from the postboard height using
+ * the container's available space through flexbox.
  */
+
+#postboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  width: 100%;
+  min-height: 56px;
+  padding: 6px;
+
+  box-sizing: border-box;
+
+  background: #2c2c2c;
+  overflow: hidden;
+}
 
 button.navBtn {
   display: flex;
   align-items: center;
   justify-content: center;
 
-  flex: 1 1 0;
-
-  width: 0;
-  min-width: 0;
+  /*
+   * Start from the available height, but allow flexbox to shrink the
+   * buttons when four of them cannot fit horizontally.
+   */
+  height: 100%;
+  width: auto;
 
   aspect-ratio: 1 / 1;
 
-/*  max-width: 72px; */
-  max-height: calc(100% - 12px);
-  height: auto;
+  /*
+   * Prevent the buttons from growing beyond one quarter of the
+   * available horizontal space.
+   */
+  max-width: calc((100% - 18px) / 4);
 
-  margin: 0 3px;
+  min-width: 0;
+
+  flex: 1 1 0;
+
+  margin: 0;
   padding: 0;
 
   box-sizing: border-box;
@@ -82,19 +111,9 @@ button.navBtn {
     box-shadow 0.1s ease;
 }
 
-/* Remove margin on the outer edges */
-button.navBtn:first-child {
-  margin-left: 0;
-}
-
-button.navBtn:last-child {
-  margin-right: 0;
-}
-
 button.navBtn:hover:not(:disabled) {
   background: #d6d6d6;
   color: #333;
-
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -116,7 +135,6 @@ button.navBtn:disabled {
 button.navBtn.active-toggle {
   background: #a5d6a7;
   color: #2c2c2c;
-
   box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -125,27 +143,29 @@ button.navBtn.active-toggle {
    ========================================================================== */
 
 /*
- * Each button is a CSS container.
+ * Keep the icons proportional to the button.
  *
- * The icon size is based on the button's own width rather than the
- * viewport. This keeps the icon proportional when the buttons grow.
+ * 55% works well for the Material Icons while leaving enough padding
+ * around the glyph.
  */
 
-button.navBtn {
-  container-type: inline-size;
-}
-
 button.navBtn .material-icons {
-  font-size: clamp(24px, 55cqw, 56px);
-  line-height: 1;
+  font-size: clamp(24px, 55%, 56px);
 }
 
-button.navBtn svg,
-.lichess-icon,
 .stockfish-icon {
-  width: clamp(14px, 55cqw, 34px);
-  height: clamp(14px, 55cqw, 34px);
-
+  width: 55%;
+  height: 55%;
   display: block;
 }
 
+/*
+ * The Stockfish button uses an inline SVG directly rather than the
+ * .stockfish-icon class, so cover that case too.
+ */
+
+button.navBtn svg {
+  width: 55%;
+  height: 55%;
+  display: block;
+}

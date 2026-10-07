@@ -21,7 +21,8 @@ let marginalMoves;
 let advanceButton;
 let currentAbortSignal = null;
 let onAbortListener = null;
-let isProcessingMove = false;
+let boardLocked;
+let puzzleFinished;
 
 export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
   return new Promise(resolve => {
@@ -29,6 +30,8 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
     console.log("IN PUZZLE-CANDIDATES");
 
     currentAbortSignal = signal;
+    boardLocked = false;
+    puzzleFinished = false;
 
     if (currentAbortSignal?.aborted) {
       resolve();
@@ -75,10 +78,10 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
 
         events: {
           after(orig, dest) {
-            isProcessingMove = true;
+            boardLocked = true;
             handleMoveWithPromotion(chess, orig, dest, handleMove);
             // runs after events: select(dest) below to prevent move from being attempted twice
-            setTimeout(() => { isProcessingMove = false; }, 0);
+            setTimeout(() => { if (!puzzleFinished) boardLocked = false; }, 0);
           },
         },
       },
@@ -90,7 +93,7 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
       events: {
         select(dest) {
           setTimeout(() => { // ensures this runs after events: after(orig, dest)
-            if (isProcessingMove) return;
+            if (boardLocked) return;
             handleClickMoveWithPromotion(chess, cg, dest, handleMove);
           }, 0);
         }
@@ -219,6 +222,8 @@ function handleMove(orig, dest, promotion = undefined) {
 
   if (currentAbortSignal?.aborted) return;
 
+  boardLocked = true;
+
   const index = findMatchingChildIndex(orig, dest, promotion);
 
   if (index !== null) {
@@ -270,6 +275,7 @@ function handleMove(orig, dest, promotion = undefined) {
   }
 
   resetBoard();
+  boardLocked = false;
 }
 
 
@@ -329,6 +335,8 @@ function isSolved() {
 
 
 function finishPuzzle() {
+  puzzleFinished = true;
+  boardLocked = true;
 
   if (currentAbortSignal?.aborted) return;
 

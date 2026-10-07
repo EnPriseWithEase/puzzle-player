@@ -15,7 +15,8 @@ let viewSolutionButtonClicked;
 let advanceButton;
 let currentAbortSignal = null;
 let onAbortListener = null;
-let isProcessingMove = false;
+let boardLocked;
+let puzzleFinished;
 
 export function runPuzzle(el, loadedPgn, options = {}) {
   return new Promise(resolve => {
@@ -30,6 +31,8 @@ export function runPuzzle(el, loadedPgn, options = {}) {
 
     currentAbortSignal = abortSignal;
     viewSolutionButtonClicked = false;
+    boardLocked = false;
+    puzzleFinished = false;
 
     if (currentAbortSignal?.aborted) {
       resolve();
@@ -61,10 +64,10 @@ export function runPuzzle(el, loadedPgn, options = {}) {
 
         events: {
           after(orig, dest) {
-	    isProcessingMove = true;
+	    boardLocked = true;
             handleMoveWithPromotion(chess, orig, dest, handleMove);
 	    // runs after events: select(dest) below to prevent move from being attempted twice
-            setTimeout(() => { isProcessingMove = false; }, 0);
+            setTimeout(() => { if (!puzzleFinished) boardLocked = false; }, 0);
           },
         },
       },
@@ -75,7 +78,7 @@ export function runPuzzle(el, loadedPgn, options = {}) {
       events: {
         select(dest) {
           setTimeout(() => { // ensures this runs after events: after(orig, dest)
-            if (isProcessingMove) return;
+            if (boardLocked) return;
             handleClickMoveWithPromotion(chess, cg, dest, handleMove);
 	  }, 0);
         }
@@ -119,6 +122,8 @@ async function handleMove(orig, dest, promotion = undefined) {
     return;
   }
 
+  boardLocked = true;
+
   const moveIsCorrect = makePlayerMove(orig, dest, promotion);
 
   if (!moveIsCorrect) {
@@ -126,6 +131,7 @@ async function handleMove(orig, dest, promotion = undefined) {
     playSound("error");
  
     resetBoard();
+    boardLocked = false;
     return;
   }
 
@@ -151,6 +157,8 @@ async function handleMove(orig, dest, promotion = undefined) {
     finishPuzzle();
     return;
   }
+
+  boardLocked = false;
 }
 
 function makePlayerMove(orig, dest, promotion) {
@@ -246,6 +254,9 @@ function isSolved() {
 }
 
 async function finishPuzzle() {
+  puzzleFinished = true;
+  boardLocked = true;
+
   if (advanceButton) {
     advanceButton.disabled = true;
   }

@@ -1,4 +1,4 @@
-import { exportDatabase } from "./database";
+import { exportDatabase, dbQuery } from "./database";
 import { getDeckPuzzles, getDecks, writeReview, updateDeckPuzzleStatus, } from "./database-usage";
 import { loadPgn } from "./pgn";
 import { runPuzzle, getFen as getStandardFen } from "./puzzle-standard";
@@ -8,7 +8,6 @@ import { createPuzzleTimer, startPuzzleTimer } from "./timer";
 import { initAudio, setAudioMuted, isAudioMuted } from "./audio";
 import { showDeckPicker } from "./deck-selection";
 import { reviewSession } from "./review";
-import { dbQuery } from "./database.js";
 
 let puzzles = [];
 let puzzleIndex = 0;
@@ -18,7 +17,7 @@ let puzzleSession = 0;
 let currentAbortController = null;
 let puzzleID = null;
 let getCurrentFen = null;
-
+let timer;
 
 export async function run(element) {
   initAudio(false);
@@ -42,7 +41,7 @@ export async function run(element) {
     return;
   }
 
-  await showDeckPicker(element, startDeck);
+  await showDeckPicker(element, startDeck, suspendPuzzle);
 }
 
 async function startDeck(deckId, element) {
@@ -81,9 +80,27 @@ async function startDeck(deckId, element) {
 
   await startPuzzles(element, session);
 
-  if (session === puzzleSession) {
-    await showDeckPicker(element, startDeck);
+  if (session === puzzleSession && !document.getElementById("deck-picker")) {
+    await showDeckPicker(element, startDeck, suspendPuzzle);
   }
+}
+
+async function suspendPuzzle() {
+  await updateDeckPuzzleStatus(
+    currentDeckId,
+    puzzles[puzzleIndex].id,
+    "suspended"
+  );
+
+  // debug
+  const suspendedPuzzles = await dbQuery(`
+    SELECT * FROM deck_puzzle
+    WHERE json_extract(config, '$.status') = ? `, { params: ["suspended"] }
+  ); 
+  console.log("SUSPENDED PUZZLES:", suspendedPuzzles);
+  
+
+  currentAbortController?.abort();
 }
 
 async function startPuzzles(element, session) {
@@ -113,8 +130,29 @@ async function startPuzzles(element, session) {
 
     window.pgn = pgn;
 
+    //// handle timer
     const timerElement = createPuzzleTimer();
-    const timer = startPuzzleTimer(timerElement);
+    timer = startPuzzleTimer(timerElement);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        timer.pause();
+      } else {
+        timer.resume();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const cleanupTimer = () => {
+      document.removeEventListener( "visibilitychange", handleVisibilityChange);
+      if (timer) {
+        timer.stop();
+        timer = null;
+      }
+    };
+
+    //// create puzzle element
     const puzzleIdElement = document.createElement("span");
 
     puzzleIdElement.id = "puzzle-id";
@@ -132,12 +170,12 @@ async function startPuzzles(element, session) {
     const onViewSolution = () => {
       if (solutionRequested) return;
       solutionRequested = true;
-      timer.stop();
+      cleanupTimer();
       reviewSession.markIncorrect();
     };
 
     if (currentDeckConfig.puzzle_type === "candidates") {
-      getCurrentFen = getCandidateFen;
+      getCurrentFen = getCandidatesFen;
       await runCandidatePuzzle(cgWrap, pgn, {onViewSolution, abortSignal});
 
     } else if (currentDeckConfig.puzzle_type === "standard") {
@@ -148,11 +186,11 @@ async function startPuzzles(element, session) {
 
     // User may have switched decks while the puzzle was running.
     if (session !== puzzleSession || abortSignal.aborted) {
-      timer.stop();
+      cleanupTimer();
       return;
     }
 
-    timer.stop();
+    cleanupTimer();
 
     const review = reviewSession.getResult();
 
@@ -166,7 +204,7 @@ async function startPuzzles(element, session) {
 
     if (session !== puzzleSession || abortSignal.aborted) return;
 
-    await runViewer(cgWrap, pgn, {abortSignal});
+    await runViewer(cgWrap, pgn, {abortSignal, reviewResult: review.result});
 
     if (session !== puzzleSession || abortSignal.aborted) return;
 
@@ -235,23 +273,31 @@ function createMenu(element) {
   decksButton.setAttribute("aria-label", "Decks");
   decksButton.title = "Decks";
   const decksButtonIcon = document.createElement("span");
-  decksButtonIcon.className = "material-icons md-small playing-cards-icon";
+  decksButtonIcon.className = "material-icons md-small material-icons-menu-icon";
   decksButtonIcon.textContent = "playing_cards";
   decksButton.appendChild(decksButtonIcon);
 
   decksButton.addEventListener("click", async () => {
-    await showDeckPicker(element, startDeck);
+    timer?.pause();
+    await showDeckPicker(element, startDeck, suspendPuzzle);
+    if (!document.hidden) { timer?.resume(); }
   });
 
   const audioButton = document.createElement("button");
   audioButton.type = "button";
   audioButton.className = "menu-item";
 
+  //const audioButtonIcon = document.createElement("span");
+  //audioButtonIcon.className = "material-icons md-small material-icons-menu-icon";
+  //audioButton.appendChild(audioButtonIcon);
+
   function updateAudioButton() {
     const muted = isAudioMuted();
 
     audioButton.textContent = muted ? "\u{1F507}" : "\u{1F50A}";
     //audioButton.textContent = muted ? "🔇" : "🔊";
+    //audioButtonIcon.textContent = muted ? "volume_off" : "volume_up";
+
     audioButton.setAttribute(
       "aria-label",
       muted ? "Unmute audio" : "Mute audio"
@@ -269,38 +315,22 @@ function createMenu(element) {
   const exportButton = document.createElement("button");
   exportButton.type = "button";
   exportButton.className = "menu-item";
-  exportButton.textContent = "\u{1F4BE}";
+  //exportButton.textContent = "\u{1F4BE}";
   //exportButton.textContent = "💾";
   exportButton.setAttribute("aria-label", "Export database");
   exportButton.title = "Export database";
+  const exportButtonIcon = document.createElement("span");
+  exportButtonIcon.className = "material-icons md-small material-icons-menu-icon";
+  exportButtonIcon.textContent = "download";
+  exportButton.appendChild(exportButtonIcon);
 
   exportButton.addEventListener("click", async () => {
     await exportDatabase();
   });
 
-  const lichessButton = document.createElement("button");
-  lichessButton.type = "button";
-  lichessButton.className = "menu-item";
-  //lichessButton.textContent = "\u{265E}";
-  //lichessButton.textContent = "♞";
-  const lichessIcon = document.createElement("img");
-  lichessIcon.src = "assets/images/lichess.svg";
-  lichessIcon.className = "lichess-icon";
-  lichessButton.appendChild(lichessIcon);
-
-  lichessButton.setAttribute("aria-label", "Open Lichess analysis");
-  lichessButton.title = "Open Lichess analysis";
-
-  lichessButton.addEventListener("click", () => {
-      const fen = getCurrentFen();
-      const url = `https://lichess.org/analysis/standard/${encodeURIComponent(fen)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-  });
-
   menu.appendChild(decksButton);
   menu.appendChild(audioButton);
   menu.appendChild(exportButton);
-  menu.appendChild(lichessButton);
 
   preboardLeft.appendChild(menu);
 }

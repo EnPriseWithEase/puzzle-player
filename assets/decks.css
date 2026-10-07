@@ -177,6 +177,15 @@
   cursor: default;
 }
 
+.puzzle-actions-section {
+  margin-top: 16px;
+  border-top: 1px solid #505050;
+}
+
+.puzzle-action-button {
+  width: 100%;
+}
+
 /* ==========================================================================
    Desktop / Tablet Breakpoint Scaling
    ========================================================================== */
@@ -214,4 +223,5 @@
     font-size: 12px;
   }
 }
+
 

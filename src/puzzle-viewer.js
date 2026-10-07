@@ -13,14 +13,20 @@ let resolvePuzzle;
 let advanceButton = null;
 let currentAbortSignal;
 let onAbortListener = null;
-let isProcessingMove = false;
+let boardLocked;
 
-export function runViewer(el, loadedPgn, options={}, signal = null) {
+export function runViewer(el, loadedPgn, options={}) {
   return new Promise(resolve => {
 
     console.log("IN VIEWER");
 
-    currentAbortSignal = signal;
+    const {
+        abortSignal = null,
+        reviewResult = null,
+    } = options;
+
+    currentAbortSignal = abortSignal;
+    boardLocked = false;
 
     if (currentAbortSignal?.aborted) {
       resolve();
@@ -41,7 +47,7 @@ export function runViewer(el, loadedPgn, options={}, signal = null) {
 
     if (currentAbortSignal) {
       onAbortListener = onAbortViewer;
-      signal.addEventListener("abort", onAbortListener, { once: true });
+      currentAbortSignal.addEventListener("abort", onAbortListener, { once: true });
     }
 
     cg = Chessground(el, {
@@ -56,10 +62,10 @@ export function runViewer(el, loadedPgn, options={}, signal = null) {
 
         events: {
           after(orig, dest) {
-            isProcessingMove = true;
+            boardLocked = true;
             handleMoveWithPromotion(chess, orig, dest, handleMove);
             // runs after events: select(dest) below to prevent move from being attempted twice
-            setTimeout(() => { isProcessingMove = false; }, 0);
+            setTimeout(() => { boardLocked = false; }, 0);
           },
         },
       },
@@ -71,7 +77,7 @@ export function runViewer(el, loadedPgn, options={}, signal = null) {
       events: {
         select(dest) {
           setTimeout(() => { // ensures this runs after events: after(orig, dest)
-            if (isProcessingMove) return;
+            if (boardLocked) return;
             handleClickMoveWithPromotion(chess, cg, dest, handleMove);
           }, 0);
         }
@@ -87,7 +93,13 @@ export function runViewer(el, loadedPgn, options={}, signal = null) {
 
     const boardSection = document.querySelector("#board section");
     boardSection.classList.remove("border-white", "border-black");
-    boardSection.classList.add(`border-${cgTurnColor(chess)}`);
+    if (reviewResult === 0) {
+        boardSection.classList.add("border-red");
+    } else if (reviewResult === 1) {
+        boardSection.classList.add("border-green");
+    } else {
+        boardSection.classList.add(`border-${cgTurnColor(chess)}`);
+    }
     //const board = el.querySelector("cg-board");
     //board.classList.add(`border-${cgTurnColor(chess)}`);
 
@@ -115,6 +127,7 @@ export function closeViewer() {
 
 
 function handleMove(orig, dest, promotion = undefined) {
+  boardLocked = true;
 
   const matchingIndex = findMatchingChildIndex(
     orig,
@@ -135,6 +148,7 @@ function handleMove(orig, dest, promotion = undefined) {
 
     updateBoard();
     updatePgnArrows();
+    boardLocked = false;
 
     return;
   }
@@ -149,6 +163,8 @@ function handleMove(orig, dest, promotion = undefined) {
   updateChess();
   updateBoard();
   updatePgnArrows();
+
+  boardLocked = false;
 }
 
 function moveBackward() {
@@ -282,86 +298,92 @@ function createNavigation() {
 
   const buttons = document.getElementById("postboard");
 
-  buttons.innerHTML = `
-    <button
-      class="navBtn"
-      id="resetBoard"
-      title="Back to start"
-      aria-label="Back to start"
-    >
-      <span class="material-icons">first_page</span>
-    </button>
+  buttons.replaceChildren();
 
-    <button
-      class="navBtn"
-      id="navBackward"
-      title="One move back"
-      aria-label="One move back"
-    >
-      <span class="material-icons">keyboard_arrow_left</span>
-    </button>
+  const resetBoardButton = document.createElement("button");
+  resetBoardButton.className = "navBtn";
+  resetBoardButton.id = "resetBoard";
+  resetBoardButton.title = "Back to start";
+  resetBoardButton.setAttribute("aria-label", "Back to start");
 
-    <button
-      class="navBtn"
-      id="navForward"
-      title="One move forward"
-      aria-label="One move forward"
-    >
-      <span class="material-icons">keyboard_arrow_right</span>
-    </button>
+  const resetIcon = document.createElement("span");
+  resetIcon.className = "material-icons";
+  resetIcon.textContent = "first_page";
+  resetBoardButton.appendChild(resetIcon);
 
-    <button
-      class="navBtn"
-      id="stockfishToggle"
-      title="Computer Analysis"
-      aria-label="Computer Analysis"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+  const navBackwardButton = document.createElement("button");
+  navBackwardButton.className = "navBtn";
+  navBackwardButton.id = "navBackward";
+  navBackwardButton.title = "One move back";
+  navBackwardButton.setAttribute("aria-label", "One move back");
+
+  const backwardIcon = document.createElement("span");
+  backwardIcon.className = "material-icons";
+  backwardIcon.textContent = "keyboard_arrow_left";
+  navBackwardButton.appendChild(backwardIcon);
+
+  const navForwardButton = document.createElement("button");
+  navForwardButton.className = "navBtn";
+  navForwardButton.id = "navForward";
+  navForwardButton.title = "One move forward";
+  navForwardButton.setAttribute("aria-label", "One move forward");
+
+  const forwardIcon = document.createElement("span");
+  forwardIcon.className = "material-icons";
+  forwardIcon.textContent = "keyboard_arrow_right";
+  navForwardButton.appendChild(forwardIcon);
+
+  const rotateBoardButton = document.createElement("button");
+  rotateBoardButton.className = "navBtn";
+  rotateBoardButton.id = "rotateBoard";
+  rotateBoardButton.title = "Flip board";
+  rotateBoardButton.setAttribute("aria-label", "Flip board");
+
+  const rotateBoardIcon = document.createElement("span");
+  rotateBoardIcon.className = "flipBoardIcon material-icons md-small";
+  rotateBoardIcon.textContent = "sync";
+  rotateBoardButton.appendChild(rotateBoardIcon);
+
+  const lichessButton = document.createElement("button");
+  lichessButton.className = "navBtn";
+  lichessButton.id = "lichessAnalysis"
+  lichessButton.title = "Open Lichess Analysis";
+  lichessButton.setAttribute("aria-label", "Open Lichess Analysis");
+
+  const lichessIcon = document.createElement("img");
+  lichessIcon.src = "assets/images/lichess.svg";
+  lichessIcon.className = "lichess-icon";
+  lichessButton.appendChild(lichessIcon);
+
+  const stockfishButton = document.createElement("button");
+  stockfishButton.className = "navBtn";
+  stockfishButton.id = "stockfishToggle";
+  stockfishButton.title = "Computer Analysis";
+  stockfishButton.setAttribute("aria-label", "Computer Analysis");
+  stockfishButton.innerHTML = `
+   <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
         <g transform="translate(0, 80)">
-          <path transform="matrix(1.4, 0, 0, 1.83, -188, 387)" d="M410-420q74 0 142.5-26T672-526q6 42 44 64t84 22v-200q-46 0-84 22.5T672-552q-53-52-120.5-80T410-660q-79 0-152 27.5T140-540q45 65 118 92.5T410-420Z"/>
+          <path fill="none" stroke="currentColor" stroke-width="40" transform="matrix(1.4, 0, 0, 1.83, -188, 387)" d="M410-420q74 0 142.5-26T672-526q6 42 44 64t84 22v-200q-46 0-84 22.5T672-552q-53-52-120.5-80T410-660q-79 0-152 27.5T140-540q45 65 118 92.5T410-420Z"/>
           <circle cx="240" cy="-660" r="60" fill="#1c2128"/>
           <circle cx="220" cy="-680" r="20" fill="#ffffff"/>
         </g>
-      </svg>
-    </button>
-    `;
-/*
-    <button
-      class="navBtn"
-      id="rotateBoard"
-      title="Flip board"
-      aria-label="Flip board"
-    >
-      <span class="flipBoardIcon material-icons md-small">sync</span>
-    </button>
-  `;
-*/
+    </svg>`;
 
-  buttons
-    .querySelector("#resetBoard")
-    .addEventListener("click", resetBoard);
+  buttons.appendChild(resetBoardButton);
+  buttons.appendChild(navBackwardButton);
+  buttons.appendChild(navForwardButton);
+  buttons.appendChild(lichessButton);
+  //buttons.appendChild(stockfishButton);
+  //buttons.appendChild(rotateBoardButton);
 
-  buttons
-    .querySelector("#navBackward")
-    .addEventListener("click", moveBackward);
-
-  buttons
-    .querySelector("#navForward")
-    .addEventListener("click", moveForward);
-
-//  buttons
-//    .querySelector("#openLichessAnalysis")
-//    .addEventListener("click", openLichessAnalysis);
-
-  buttons
-    .querySelector("#stockfishToggle")
-    .addEventListener("click", toggleAnalysis);
-
-//  buttons
-//    .querySelector("#rotateBoard")
-//    .addEventListener("click", rotateBoard);
+  resetBoardButton.addEventListener("click", resetBoard);
+  navBackwardButton.addEventListener("click", moveBackward);
+  navForwardButton.addEventListener("click", moveForward);
+  lichessButton.addEventListener("click", openLichessAnalysis);
+  stockfishButton.addEventListener("click", toggleAnalysis);
+  rotateBoardButton.addEventListener("click", rotateBoard);
 }
-
+ 
 
 function updateNavigationButtons() {
 
@@ -427,12 +449,8 @@ async function copyFen() {
 }
 
 function openLichessAnalysis() {
-
   const fen = chess.fen();
-
-  const url =
-    `https://lichess.org/analysis/standard/${encodeURIComponent(fen)}`;
-
+  const url = `https://lichess.org/analysis/standard/${encodeURIComponent(fen)}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
 

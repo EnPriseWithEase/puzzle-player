@@ -1,6 +1,6 @@
 import { getDecks, resetDeck } from "./database-usage";
 
-export async function showDeckPicker(element, onDeckSelected) {
+export async function showDeckPicker(element, onDeckSelected, onSuspendPuzzle) {
   const overlay = document.createElement("div");
   overlay.id = "deck-picker";
 
@@ -31,29 +31,47 @@ export async function showDeckPicker(element, onDeckSelected) {
 
   document.getElementById("puzzlebox").appendChild(overlay);
 
-  closeButton.addEventListener("click", () => {
-    overlay.remove();
+  let resolveClosed;
+
+  const deckPickerClosed = new Promise(resolve => {
+    resolveClosed = resolve;
   });
+
+  const close = () => {
+    if (!overlay.isConnected) return;
+
+    overlay.remove();
+    resolveClosed();
+  };
+
+  closeButton.addEventListener("click", close);
 
   overlay.addEventListener("click", event => {
     if (event.target === overlay) {
-      overlay.remove();
+      close();
     }
   });
 
   await refreshDeckList(
     list,
     element,
-    overlay,
-    onDeckSelected
+    onDeckSelected,
+    close,
+    onSuspendPuzzle,
+    closeButton
   );
+
+  await deckPickerClosed;
+
 }
 
 async function refreshDeckList(
   list,
   element,
-  overlay,
-  onDeckSelected
+  onDeckSelected,
+  close,
+  onSuspendPuzzle,
+  closeButton
 ) {
   const decks = await getDecks();
 
@@ -85,9 +103,9 @@ async function refreshDeckList(
       folderName,
       folderDecks,
       element,
-      overlay,
       onDeckSelected,
-      list
+      list,
+      close
     );
   }
 
@@ -100,11 +118,17 @@ async function refreshDeckList(
       list,
       deck,
       element,
-      overlay,
       onDeckSelected,
-      list
+      list,
+      close
     );
   }
+
+  addPuzzleActions(
+    list,
+    onSuspendPuzzle,
+    closeButton
+  );
 }
 
 function addFolder(
@@ -112,9 +136,9 @@ function addFolder(
   folderName,
   decks,
   element,
-  overlay,
   onDeckSelected,
-  list
+  list,
+  close
 ) {
   const section = document.createElement("div");
   section.className = "folder-section";
@@ -147,9 +171,9 @@ function addFolder(
       contents,
       deck,
       element,
-      overlay,
       onDeckSelected,
-      list
+      list,
+      close
     );
   }
 
@@ -160,9 +184,9 @@ function addDeck(
   container,
   deck,
   element,
-  overlay,
   onDeckSelected,
-  list
+  list,
+  close
 ) {
   const row = document.createElement("div");
   row.className = "deck-row";
@@ -196,7 +220,7 @@ function addDeck(
       return;
     }
 
-    overlay.remove();
+    close();
 
     await onDeckSelected(deck.id, element);
   });
@@ -212,8 +236,10 @@ function addDeck(
       await refreshDeckList(
         list,
         element,
-        overlay,
-        onDeckSelected
+        onDeckSelected,
+	close,
+	onSuspendPuzzle,
+	closeButton
       );
     } finally {
       resetButton.disabled = false;
@@ -229,5 +255,47 @@ function addDeck(
   row.appendChild(controlStack);
 
   container.appendChild(row);
+}
+
+function addPuzzleActions(
+  container,
+  onSuspendPuzzle,
+  closeButton
+) {
+  const section = document.createElement("div");
+  section.className = "folder-section puzzle-actions-section";
+
+  const folderButton = document.createElement("button");
+  folderButton.type = "button";
+  folderButton.className = "folder-button";
+  folderButton.textContent = "▸  Puzzle Actions";
+
+  const contents = document.createElement("div");
+  contents.className = "folder-contents";
+  contents.hidden = true;
+
+  folderButton.addEventListener("click", () => {
+    contents.hidden = !contents.hidden;
+
+    folderButton.textContent = contents.hidden
+      ? "▸  Puzzle Actions"
+      : "▾  Puzzle Actions";
+  });
+
+  const suspendButton = document.createElement("button");
+  suspendButton.type = "button";
+  suspendButton.className = "deck-button puzzle-action-button";
+  suspendButton.textContent = "Suspend puzzle";
+
+  suspendButton.addEventListener("click", async () => {
+    suspendButton.disabled = true;
+    closeButton.hidden = true;
+    await onSuspendPuzzle();
+  });
+
+  contents.appendChild(suspendButton);
+  section.appendChild(folderButton);
+  section.appendChild(contents);
+  container.appendChild(section);
 }
 

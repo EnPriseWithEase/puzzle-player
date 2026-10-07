@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#d7dee9">
-  <g transform="translate(0, 80)>
+  <g transform="translate(0, 80)">
     <!-- Base shape -->
     <path transform="matrix(1.4, 0, 0, 1.83, -188, 387)" d="M410-420q74 0 142.5-26T672-526q6 42 44 64t84 22v-200q-46 0-84 22.5T672-552q-53-52-120.5-80T410-660q-79 0-152 27.5T140-540q45 65 118 92.5T410-420Z"/>
     
