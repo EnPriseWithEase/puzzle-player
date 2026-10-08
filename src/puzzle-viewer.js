@@ -126,7 +126,7 @@ export function closeViewer() {
 }
 
 
-function handleMove(orig, dest, promotion = undefined) {
+async function handleMove(orig, dest, promotion = undefined) {
   boardLocked = true;
 
   const matchingIndex = findMatchingChildIndex(
@@ -163,6 +163,11 @@ function handleMove(orig, dest, promotion = undefined) {
   updateChess();
   updateBoard();
   updatePgnArrows();
+  // prevents a standard orig-dest move from also immediately
+  // triggering a click-to-move to the same square
+  // for the opposite side
+  // there may still be an issue during promotion?
+  await new Promise(resolve => setTimeout(resolve, 0));
 
   boardLocked = false;
 }
@@ -362,6 +367,7 @@ function createNavigation() {
       const svgEl = lichessButton.querySelector("svg");
         svgEl.classList.add("lichess-icon");
     })
+    .catch((err) => console.error("Failed to load Lichess SVG:", err));
 
   const stockfishButton = document.createElement("button");
   stockfishButton.className = "navBtn";
@@ -373,9 +379,10 @@ function createNavigation() {
     .then((response) => response.text())
     .then((svgText) => {
       stockfishButton.innerHTML = svgText;
-      const svgEl = lichessButton.querySelector("svg");
+      const svgEl = stockfishButton.querySelector("svg");
         svgEl.classList.add("stockfish-icon");
     })
+    .catch((err) => console.error("Failed to load Stockfish SVG:", err));
 
   buttons.appendChild(resetBoardButton);
   buttons.appendChild(navBackwardButton);

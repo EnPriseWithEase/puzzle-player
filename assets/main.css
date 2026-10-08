@@ -104,47 +104,90 @@ body {
   height: 100%;
 }
 
+
 /* ==========================================================================
    Pawn Promotion Popup
    ========================================================================== */
 
 #promotion {
-  position: absolute;
-  z-index: 10;
-  display: none;
-  align-items: center;
+  display: flex;
+  align-items: center; /*flex-end; */
   justify-content: center;
-  padding: calc(100vmin * 0.01);
-  gap: calc(100vmin * 0.01);
-  border-radius: 6px;
-  background: rgba(60, 60, 60, 0.95);
+  box-sizing: border-box;
+  padding: 0px 6px;
+  background: #2c2c2c;
+  position: absolute;
+  width: 100%;
+  max-width: calc(min(calc(100% - 24px), calc(100vh - 200px)) + 16px + 4px);
+  height: 100%;
+  display: none;
 }
 
 #promotion.visible {
   display: flex;
 }
 
-.promotion-piece {
-  width: calc(100vmin * 0.1);
-  height: calc(100vmin * 0.1);
+/* Promotion Buttons (Mirrors .navBtn layout) */
+button.promotion-piece {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 1 1 0;
+
+  width: 0;
+  min-width: 0;
+
+  aspect-ratio: 1 / 1;
+
+  max-height: calc(100% - 4px);
+  height: auto;
+
+  margin: 0 3px;
   padding: 0;
-  border: 0;
+
+  box-sizing: border-box;
+
+  border: 1px solid #111;
   border-radius: 4px;
-  background: #737373;
+
+  background: #242424;
   cursor: pointer;
+
+  /* Container query context so internal image can query button size */
+  container-type: inline-size;
+
+  transition: background-color 0.1s ease, box-shadow 0.1s ease;
 }
 
-.promotion-piece img {
-  width: 100%;
-  height: 100%;
+/* Outer margin reset for clean edge alignment */
+button.promotion-piece:first-child {
+  margin-left: 0;
 }
 
-.promotion-piece:hover {
-  background: #d6d6d6;
+button.promotion-piece:last-child {
+  margin-right: 0;
 }
 
-.promotion-piece:active {
-  background: #557d38;
+/* Hover feedback */
+@media (hover: hover) {
+  button.promotion-piece:hover {
+    background: #d6d6d6;
+  }
+}
+
+/* Piece Images (Mirrors .navBtn SVG clamp formula) */
+button.promotion-piece img {
+  width: clamp(14px, 55cqw, 34px);
+  height: clamp(14px, 55cqw, 34px);
+  display: block;
+  object-fit: contain;
+}
+
+/* If #promotion.visible exists inside #puzzlebox, hide the continue button */
+#puzzlebox:has(#promotion.visible) #preboard .continueBtn {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -174,6 +217,7 @@ body {
    ========================================================================== */
 
 #preboard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -221,6 +265,7 @@ body {
  */
 
 .preboard-middle {
+  position:relative;
   display: flex;
   align-items: center;
   justify-content: center;
