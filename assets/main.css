@@ -132,31 +132,21 @@ button.promotion-piece {
   display: flex;
   align-items: center;
   justify-content: center;
-
   flex: 1 1 0;
-
   width: 0;
   min-width: 0;
-
   aspect-ratio: 1 / 1;
-
   max-height: calc(100% - 4px);
   height: auto;
-
   margin: 0 3px;
   padding: 0;
-
   box-sizing: border-box;
-
   border: 1px solid #111;
   border-radius: 4px;
-
   background: #242424;
   cursor: pointer;
-
-  /* Container query context so internal image can query button size */
   container-type: inline-size;
-
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   transition: background-color 0.1s ease, box-shadow 0.1s ease;
 }
 
@@ -173,6 +163,7 @@ button.promotion-piece:last-child {
 @media (hover: hover) {
   button.promotion-piece:hover {
     background: #d6d6d6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 }
 
