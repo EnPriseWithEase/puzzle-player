@@ -219,6 +219,74 @@ export async function dbInsert(tablename, data, { jsonColumns = [] } = {}) {
   return id;
 }
 
+// untested
+export async function dbUpdate(
+  tablename,
+  data,
+  where,
+  { jsonColumns = [] } = {}
+) {
+  const db = await getDatabase();
+
+  const columns = Object.keys(data);
+
+  if (columns.length === 0) {
+    throw new Error("No data provided for update");
+  }
+
+  const whereColumns = Object.keys(where);
+
+  if (whereColumns.length === 0) {
+    throw new Error("WHERE clause is required");
+  }
+
+  const setParts = [];
+  const values = [];
+
+  for (const column of columns) {
+    const val = data[column];
+
+    // If it's a JSON column and the value is an object, use json_set for each key
+    if (
+      jsonColumns.includes(column) &&
+      typeof val === "object" &&
+      val !== null
+    ) {
+      for (const [jsonKey, jsonVal] of Object.entries(val)) {
+        setParts.push(`${column} = json_set(COALESCE(${column}, '{}'), '$.${jsonKey}', ?)`);
+        values.push(jsonVal);
+      }
+    } else {
+      // Standard column update
+      setParts.push(`${column} = ?`);
+      values.push(serializeValue(val, column, jsonColumns));
+    }
+  }
+
+  const whereValues = whereColumns.map((column) =>
+    serializeValue(where[column], column, jsonColumns)
+  );
+
+  const setClause = setParts.join(", ");
+
+  const whereClause = whereColumns
+    .map((column) => `${column} = ?`)
+    .join(" AND ");
+
+  const sql = `
+    UPDATE ${tablename}
+    SET ${setClause}
+    WHERE ${whereClause}
+  `;
+
+  db.run(sql, [...values, ...whereValues]);
+
+  const changes = db.exec("SELECT changes()")[0].values[0][0];
+  await saveToIndexedDB(db);
+  return changes;
+}
+/*
+// This original version does not correctly handle json columns
 export async function dbUpdate(
   tablename,
   data,
@@ -267,6 +335,7 @@ export async function dbUpdate(
   await saveToIndexedDB(db);
   return changes;
 }
+*/
 
 function serializeValue(value, column, jsonColumns) {
   if (

@@ -57,20 +57,12 @@ export function writeReview(review) {
 }
 
 export function updateDeckPuzzleStatus(deckId, puzzleId, status) {
-  return dbUpdate(
-    "deck_puzzle",
-    {
-      config: {
-        status,
-      },
-    },
-    {
-      deck: deckId,
-      puzzle: puzzleId,
-    },
-    {
-      jsonColumns: ["config"],
-    }
+  return dbRun(
+    `UPDATE deck_puzzle
+     SET config = json_set(COALESCE(config, '{}'), '$.status', ?)
+     WHERE deck = ?
+       AND puzzle = ?`,
+    [status, deckId, puzzleId]
   );
 }
 
