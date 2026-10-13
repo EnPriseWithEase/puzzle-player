@@ -2,7 +2,7 @@ import { Chess } from "chess.js";
 import { Chessground } from "chessground";
 
 import { pgnPath, setPath, getNodeAtPath, getChildrenAtPath, findMatchingChildIndex, addNodeToPath, createNode, removeNodeAtPath } from "./pgn";
-import { cgTurnColor, legalDests, handleMoveWithPromotion, handleClickMoveWithPromotion } from "./util"
+import { cgTurnColor, legalDests, handleMoveWithPromotion, handleClickMoveWithPromotion, hidePromotionPopup } from "./util"
 import { changeAudio, playSound } from "./audio";
 
 let cg;
@@ -178,6 +178,8 @@ function moveBackward() {
     return;
   }
 
+  hidePromotionPopup();
+
   playSound("move");
 
   const currentNode = getNodeAtPath();
@@ -203,6 +205,8 @@ function moveForward() {
     return;
   }
 
+  hidePromotionPopup();
+
   pgnPath.push(0);
 
   changeAudio(getNodeAtPath());
@@ -215,6 +219,7 @@ function moveForward() {
 // reset to starting fen 
 function resetBoard() {
 
+  hidePromotionPopup();
   playSound("move");
 
   // remove temporary nodes
