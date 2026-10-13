@@ -8,3 +8,6 @@ Browse to http://127.0.0.1:8080
 
 To clear IndexedDB in developer tools:
   Application -> Storage
+
+node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON query-test-regex.mjs | grep pgn
+

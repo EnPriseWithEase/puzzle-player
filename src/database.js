@@ -28,27 +28,28 @@ async function loadDatabase() {
 
   if (savedDatabase) {
     console.log("Loading database from index...");
-    return new SQL.Database(savedDatabase);
+    const db = new SQL.Database(savedDatabase);
+    return registerSqliteFunctions(db);
   }
 
   // No saved database — load the original database
   const response = await fetch("/data/puzzle.sqlite");
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to load database: ${response.status}`
-    );
+    throw new Error( `Failed to load database: ${response.status}`);
   }
 
   console.log("Loading database from file...");
 
   const buffer = await response.arrayBuffer();
-  const database = new SQL.Database(new Uint8Array(buffer));
+  const db = new SQL.Database(new Uint8Array(buffer));
+
+  registerSqliteFunctions(db);
 
   // Save the initial database to IndexedDB
-  await saveToIndexedDB(database);
+  await saveToIndexedDB(db);
 
-  return database;
+  return db;
 }
 
 function openIndexedDB() {
@@ -283,5 +284,17 @@ export async function dbRun(sql, params = []) {
   const db = await getDatabase();
   db.run(sql, params);
   await saveToIndexedDB(db);
+}
+
+export function registerSqliteFunctions(db) {
+  db.create_function("regexp", (pattern, str) => {
+    if (pattern == null || str == null) {
+      return null;
+    }
+
+    return new RegExp(pattern).test(str) ? 1 : 0;
+  });
+
+  return db;
 }
 

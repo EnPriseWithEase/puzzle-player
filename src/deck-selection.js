@@ -105,7 +105,9 @@ async function refreshDeckList(
       element,
       onDeckSelected,
       list,
-      close
+      close,
+      onSuspendPuzzle,
+      closeButton
     );
   }
 
@@ -120,7 +122,9 @@ async function refreshDeckList(
       element,
       onDeckSelected,
       list,
-      close
+      close,
+      onSuspendPuzzle,
+      closeButton
     );
   }
 
@@ -138,7 +142,9 @@ function addFolder(
   element,
   onDeckSelected,
   list,
-  close
+  close,
+  onSuspendPuzzle,
+  closeButton
 ) {
   const section = document.createElement("div");
   section.className = "folder-section";
@@ -173,7 +179,9 @@ function addFolder(
       element,
       onDeckSelected,
       list,
-      close
+      close,
+      onSuspendPuzzle,
+      closeButton
     );
   }
 
@@ -186,7 +194,9 @@ function addDeck(
   element,
   onDeckSelected,
   list,
-  close
+  close,
+  onSuspendPuzzle,
+  closeButton
 ) {
   const row = document.createElement("div");
   row.className = "deck-row";
@@ -233,6 +243,7 @@ function addDeck(
     try {
       await resetDeck(deck.id);
 
+      //await new Promise(resolve => setTimeout(resolve, 50));
       await refreshDeckList(
         list,
         element,

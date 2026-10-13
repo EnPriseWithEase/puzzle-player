@@ -108,6 +108,16 @@ export async function resetDeck(deckId) {
     }
   }
 }
+
+export function resetDeck(deckId) {
+  return dbRun(
+    `UPDATE deck_puzzle
+     SET config = json_set(config, '$.status', 'unreviewed')
+     WHERE deck = ?
+       AND json_extract(config, '$.status') = 'reviewed'`,
+    [deckId]
+  );
+}
 */
 
 

@@ -111,8 +111,6 @@ export function getUniqueOrigForDest(chess, dest) {
 
 export function createViewSolutionButton(callback, finish) {
 
-  const preboardMiddle = document.querySelector(".preboard-middle");
-
   const button = document.createElement("button");
 
   button.type = "button";
@@ -126,7 +124,7 @@ export function createViewSolutionButton(callback, finish) {
     finish();
   });
 
-  preboardMiddle.appendChild(button);
+  document.querySelector(".preboard-middle").appendChild(button);
 
   return button;
 }

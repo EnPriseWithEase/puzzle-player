@@ -1,8 +1,10 @@
 CREATE TABLE deck (
   id            integer PRIMARY KEY NOT NULL,
-  name          text NOT NULL UNIQUE,
+  name          text NOT NULL,
   folder        text,
-  config        text
+  config        text,
+
+  UNIQUE (name, folder)
 );
 
 -- deck.config = {
