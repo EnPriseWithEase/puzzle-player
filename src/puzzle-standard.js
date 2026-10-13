@@ -207,11 +207,18 @@ function makeOpponentMove() {
   const move = chess.move({
     from: node.from,
     to: node.to,
+    promotion: node.promotion
   });
 
   changeAudio(move);
 
-  cg.move(node.from, node.to);
+  if (node.promotion !== undefined) {
+    cg.set({
+      fen: chess.fen(),
+    });
+  } else {
+    cg.move(node.from, node.to);
+  }
 
   return true;
 
