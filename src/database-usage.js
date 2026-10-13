@@ -24,7 +24,13 @@ export function getDecks() {
   return dbQuery(
     `SELECT
        deck.*,
-       COUNT(deck_puzzle.puzzle) AS total_puzzles,
+       SUM(
+          CASE
+            WHEN json_extract(deck_puzzle.config, '$.status') != 'suspended'
+            THEN 1
+            ELSE 0
+          END
+        ) AS total_puzzles,
        SUM(
          CASE
            WHEN json_extract(deck_puzzle.config, '$.status') = 'unreviewed'
@@ -71,53 +77,12 @@ export function updateDeckPuzzleStatus(deckId, puzzleId, status) {
 export function resetDeck(deckId) {
   return dbRun(
     `UPDATE deck_puzzle
-     SET config = ?
-     WHERE deck = ?
-       AND json_extract(config, '$.status') = 'reviewed'`,
-    [
-      JSON.stringify({ status: "unreviewed" }),
-      deckId,
-    ]
-  );
-}
-
-/*
-export async function resetDeck(deckId) {
-  const rows = await dbQuery(
-    `SELECT
-       deck,
-       puzzle,
-       config
-     FROM deck_puzzle
-     WHERE deck = ?`,
-    {
-      params: [deckId],
-      jsonColumns: ["config"],
-    }
-  );
-
-  for (const row of rows) {
-    const status = row.config?.status ?? "unreviewed";
-
-    if (status === "reviewed") {
-      await updateDeckPuzzleStatus(
-        row.deck,
-        row.puzzle,
-        "unreviewed"
-      );
-    }
-  }
-}
-
-export function resetDeck(deckId) {
-  return dbRun(
-    `UPDATE deck_puzzle
      SET config = json_set(config, '$.status', 'unreviewed')
      WHERE deck = ?
        AND json_extract(config, '$.status') = 'reviewed'`,
     [deckId]
   );
 }
-*/
+
 
 
