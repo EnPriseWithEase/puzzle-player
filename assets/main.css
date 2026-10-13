@@ -277,7 +277,7 @@ button.promotion-piece img {
  * than its original 44px height without changing the board's position.
  */
 
-#preboard .continueBtn {
+.continueBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -303,18 +303,18 @@ button.promotion-piece img {
     box-shadow 0.1s ease;
 }
 
-#preboard .continueBtn:hover {
+.continueBtn:hover {
   background: #d6d6d6;
   color: #333;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-#preboard .continueBtn:active {
+.continueBtn:active {
   background: #557d38;
   color: #ffffff;
 }
 
-#preboard .continueBtn:focus-visible {
+.continueBtn:focus-visible {
   outline: 2px solid #7fb069;
   outline-offset: 1px;
 }

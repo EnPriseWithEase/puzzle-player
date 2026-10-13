@@ -148,6 +148,9 @@ async function handleMove(orig, dest, promotion = undefined) {
 
     updateBoard();
     updatePgnArrows();
+
+    // board shouldn't unlock until after select event fired
+    await new Promise(resolve => setTimeout(resolve, 0));
     boardLocked = false;
 
     return;
