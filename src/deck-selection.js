@@ -1,3 +1,4 @@
+import { exportDatabase } from "./database";
 import { getDecks, resetDeck } from "./database-usage";
 import { createStatisticsSection } from "./statistics";
 
@@ -309,7 +310,24 @@ function addPuzzleActions(
     await onSuspendPuzzle();
   });
 
+
+  const exportButton = document.createElement("button");
+  exportButton.type = "button";
+  exportButton.className = "deck-button puzzle-action-button";
+  exportButton.textContent = "Export database";
+
+  exportButton.addEventListener("click", async () => {
+    exportButton.disabled = true;
+
+    try {
+      await exportDatabase();
+    } finally {
+      exportButton.disabled = false;
+    }
+  });
+
   contents.appendChild(suspendButton);
+  contents.appendChild(exportButton);
   section.appendChild(folderButton);
   section.appendChild(contents);
   container.appendChild(section);

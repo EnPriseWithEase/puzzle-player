@@ -1,4 +1,4 @@
-import { exportDatabase, dbQuery } from "./database";
+import { dbQuery } from "./database";
 import { getDeckPuzzles, getDecks, writeReview, updateDeckPuzzleStatus, } from "./database-usage";
 import { loadPgn, getStartingSide } from "./pgn";
 import { runPuzzle, getFen as getStandardFen } from "./puzzle-standard";
@@ -366,22 +366,22 @@ function createMenu(element) {
     //setTimeout(() => audioButton.blur(), 0);
   });
 
-  const exportButton = document.createElement("button");
-  exportButton.type = "button";
-  exportButton.className = "menu-item";
-  //exportButton.textContent = "\u{1F4BE}";
-  //exportButton.textContent = "💾";
-  exportButton.setAttribute("aria-label", "Export database");
-  exportButton.title = "Export database";
-  const exportButtonIcon = document.createElement("span");
-  exportButtonIcon.className = "material-icons md-small material-icons-menu-icon";
-  exportButtonIcon.textContent = "download";
-  exportButton.appendChild(exportButtonIcon);
 
-  exportButton.addEventListener("click", async () => {
-    await exportDatabase();
-    // trying to remove highlight focus in android after tap
-    //setTimeout(() => exportButton.blur(), 0);
+  const replayButton = document.createElement("button");
+  replayButton.type = "button";
+  replayButton.className = "menu-item";
+  replayButton.setAttribute("aria-label", "Replay puzzle");
+  replayButton.title = "Replay puzzle";
+
+  const replayButtonIcon = document.createElement("span");
+  replayButtonIcon.className =
+    "material-icons md-small material-icons-menu-icon";
+  replayButtonIcon.textContent = "replay";
+  replayButton.appendChild(replayButtonIcon);
+
+  replayButton.addEventListener("click", async () => {
+    if (!puzzles[puzzleIndex]) return;
+    await reloadCurrentPuzzle(element);
   });
 
   const startingSideButton = document.createElement("button");
@@ -425,7 +425,7 @@ function createMenu(element) {
 
   menu.appendChild(decksButton);
   menu.appendChild(audioButton);
-  menu.appendChild(exportButton);
+  menu.appendChild(replayButton);
   menu.appendChild(startingSideButton);
 
   preboardLeft.appendChild(menu);
