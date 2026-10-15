@@ -1,4 +1,5 @@
 import { getDecks, resetDeck } from "./database-usage";
+import { createStatisticsSection } from "./statistics";
 
 export async function showDeckPicker(element, onDeckSelected, onSuspendPuzzle) {
   const overlay = document.createElement("div");
@@ -28,7 +29,6 @@ export async function showDeckPicker(element, onDeckSelected, onSuspendPuzzle) {
   panel.appendChild(header);
   panel.appendChild(list);
   overlay.appendChild(panel);
-
   document.getElementById("puzzlebox").appendChild(overlay);
 
   let resolveClosed;
@@ -60,6 +60,10 @@ export async function showDeckPicker(element, onDeckSelected, onSuspendPuzzle) {
     onSuspendPuzzle,
     closeButton
   );
+
+  const statistics = await createStatisticsSection();
+  panel.appendChild(statistics);
+
 
   await deckPickerClosed;
 
@@ -133,6 +137,7 @@ async function refreshDeckList(
     onSuspendPuzzle,
     closeButton
   );
+
 }
 
 function addFolder(

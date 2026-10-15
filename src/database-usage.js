@@ -77,4 +77,30 @@ export function resetDeck(deckId) {
 }
 
 
+// statistics
+//
+
+export function getDailyReviewCounts() {
+  return dbQuery(`
+    SELECT
+      date(inittime / 1000, 'unixepoch', 'localtime') AS day,
+      COUNT(*) AS count
+    FROM review
+    GROUP BY day
+    ORDER BY day
+  `);
+}
+
+export function getTodaysReviewStats() {
+  return dbQuery(`
+    SELECT
+      COUNT(*) AS cards,
+      COALESCE(SUM(elapsed), 0) AS elapsed,
+      COALESCE(SUM(result), 0) AS correct
+    FROM review
+    WHERE date(inittime / 1000, 'unixepoch', 'localtime')
+        = date('now', 'localtime')
+  `);
+}
+
 
