@@ -353,7 +353,7 @@ function createNavigation() {
   rotateBoardButton.setAttribute("aria-label", "Flip board");
 
   const rotateBoardIcon = document.createElement("span");
-  rotateBoardIcon.className = "flipBoardIcon material-icons md-small";
+  rotateBoardIcon.className = "flipBoardIcon material-icons";
   rotateBoardIcon.textContent = "sync";
   rotateBoardButton.appendChild(rotateBoardIcon);
 

@@ -1,20 +1,31 @@
 import { parse } from "@mliebelt/pgn-parser";
 import { Chess } from "chess.js";
+import { mirrorPgnTree, mirrorGameCommentArrows, mirrorFen } from "./mirror"
 
 export let pgn = null;
 export let pgnPath = [];
 
-export function loadPgn(pgnstring) {
-  pgn = parse(pgnstring, {
-    startRule: "game",
-  });
+export function getStartingSide(pgnString) {
+  const pgn = parse(pgnString, { startRule: "game" });
+  const fen = pgn.tags.FEN;
+  if (fen) { return fen.split(" ")[1] === "w" ? "w" : "b"; }
+  return "w";
+}
+
+export function loadPgn(pgnstring, options = {}) {
+  pgn = parse(pgnstring, { startRule: "game", });
+
+  if (options.mirror) {
+    mirrorPgnTree(pgn.moves, "invert_mirror");
+    mirrorGameCommentArrows(pgn, "invert_mirror");
+    if (pgn.tags.FEN) {
+      pgn.tags.FEN = mirrorFen(pgn.tags.FEN, "invert_mirror");
+    }
+  }
 
   const restructuredMoves = restructureMoveTree(pgn.moves);
 
-  pgn.moves = augmentMoveTree(
-    restructuredMoves,
-    pgn.tags.FEN
-  );
+  pgn.moves = augmentMoveTree(restructuredMoves, pgn.tags.FEN);
 
   pgnPath.length = 0;
 

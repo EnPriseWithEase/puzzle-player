@@ -23,6 +23,7 @@ CREATE TABLE review (
   numwrong   integer NOT NULL,
   elapsed    integer NOT NULL,
   attempts   text NOT NULL,
+  config     text,
 
   FOREIGN KEY (puzzle) REFERENCES puzzle(id)
 );

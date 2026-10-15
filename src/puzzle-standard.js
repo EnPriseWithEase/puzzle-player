@@ -79,7 +79,8 @@ export function runPuzzle(el, loadedPgn, options = {}) {
         select(dest) {
           setTimeout(() => { // ensures this runs after events: after(orig, dest)
             if (boardLocked) return;
-            handleClickMoveWithPromotion(chess, cg, dest, handleMove);
+	    // This works but I am commenting it out to standardize user move times
+            //handleClickMoveWithPromotion(chess, cg, dest, handleMove);
 	  }, 0);
         }
       },

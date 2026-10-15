@@ -52,7 +52,7 @@ export function writeReview(review) {
   return dbInsert(
     "review",
     review,
-    { jsonColumns: ["attempts"] }
+    { jsonColumns: ["attempts","config"] }
   );
 }
 

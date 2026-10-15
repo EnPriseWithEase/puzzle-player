@@ -1,6 +1,6 @@
 import { exportDatabase, dbQuery } from "./database";
 import { getDeckPuzzles, getDecks, writeReview, updateDeckPuzzleStatus, } from "./database-usage";
-import { loadPgn } from "./pgn";
+import { loadPgn, getStartingSide } from "./pgn";
 import { runPuzzle, getFen as getStandardFen } from "./puzzle-standard";
 import { runCandidatePuzzle, getFen as getCandidatesFen } from "./puzzle-candidates";
 import { runViewer, getFen as getViewerFen } from "./puzzle-viewer";
@@ -15,9 +15,11 @@ let currentDeckId = null;
 let currentDeckConfig = null;
 let puzzleSession = 0;
 let currentAbortController = null;
+let cleanupCurrentTimer = null;
 let puzzleID = null;
 let getCurrentFen = null;
 let timer;
+let startingSide = "default" ;
 
 export async function run(element) {
   initAudio(false);
@@ -103,6 +105,13 @@ async function suspendPuzzle() {
   currentAbortController?.abort();
 }
 
+async function reloadCurrentPuzzle(element) {
+  cleanupCurrentTimer?.();
+  currentAbortController?.abort();
+  const session = ++puzzleSession;
+  await startPuzzles(element, session);
+}
+
 async function startPuzzles(element, session) {
   while ( puzzleIndex < puzzles.length && session === puzzleSession) {
 
@@ -126,32 +135,45 @@ async function startPuzzles(element, session) {
     console.log("STARTPUZZLES", puzzleIndex, puzzles.length);
     console.log("PGN", puzzle.pgn);
 
-    const pgn = loadPgn(puzzle.pgn);
+    const pgnStartingSide = getStartingSide(puzzle.pgn);
+
+    const mirror = startingSide !== "default" && startingSide !== pgnStartingSide;
+    const pgn = loadPgn(puzzle.pgn, { mirror });
 
     window.pgn = pgn;
 
     //// handle timer
     const timerElement = createPuzzleTimer();
-    timer = startPuzzleTimer(timerElement);
+    const activeTimer = startPuzzleTimer(timerElement);
+    timer = activeTimer; // Reference for external checks if needed
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        timer.pause();
+        activeTimer.pause();
       } else {
-        timer.resume();
+        activeTimer.resume();
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     const cleanupTimer = () => {
-      document.removeEventListener( "visibilitychange", handleVisibilityChange);
-      if (timer) {
-        timer.stop();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      
+      // Stop this specific timer instance
+      if (activeTimer) {
+        activeTimer.stop();
+      }
+      
+      // CRITICAL: Only clear the global 'timer' reference if it still belongs 
+      // to this specific instance. This prevents an old, aborted puzzle's 
+      // delayed cleanup from killing the newly started timer!
+      if (timer === activeTimer) {
         timer = null;
       }
     };
 
+    cleanupCurrentTimer = cleanupTimer;
     //// create puzzle element
     const puzzleIdElement = document.createElement("span");
 
@@ -192,7 +214,17 @@ async function startPuzzles(element, session) {
 
     cleanupTimer();
 
+    //
+    // write review for puzzle
+    //
+
     const review = reviewSession.getResult();
+
+    (review.config ??= {}).side = mirror ? (pgnStartingSide === "b" ? "w" : "b") : pgnStartingSide;
+
+    if (mirror) {
+      (review.config ??= {}).mirror = true;
+    }
 
     console.log("REVIEW:", review);
 
@@ -328,9 +360,49 @@ function createMenu(element) {
     await exportDatabase();
   });
 
+  const startingSideButton = document.createElement("button");
+  startingSideButton.type = "button";
+  startingSideButton.className = "menu-item";
+ 
+  const startingSides = ["default", "w", "b"];
+
+  const checkerboardIcons = {
+    "default": `<svg xmlns="http://www.w3.org/2000/svg" width="22.5" height="22.5" viewBox="-5 -5 90 90"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#dfe3e6" /> <rect x="20" width="20" height="20" fill="#8fa2ad" /> <rect y="20" width="20" height="20" fill="#8fa2ad" /> <rect x="20" y="20" width="20" height="20" fill="#dfe3e6" /> </pattern> </defs> <rect x="0" y="0" width="80" height="80" fill="url(#checkerboard)" /> <line x1="-5" y1="-5" x2="85" y2="85" stroke="#e73a94" stroke-width="8" /> </svg>`,
+    "w":       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 80 80"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#dfe3e6" /> <rect x="20" width="20" height="20" fill="#8fa2ad" /> <rect y="20" width="20" height="20" fill="#8fa2ad" /> <rect x="20" y="20" width="20" height="20" fill="#dfe3e6" /> </pattern> </defs> <rect width="100%" height="100%" fill="url(#checkerboard)" /> </svg>`,
+    "b":       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 80 80"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#8fa2ad" /> <rect x="20" width="20" height="20" fill="#1f1f1f" /> <rect y="20" width="20" height="20" fill="#1f1f1f" /> <rect x="20" y="20" width="20" height="20" fill="#8fa2ad" /> </pattern> </defs> <rect width="100%" height="100%" fill="url(#checkerboard)" /> </svg>`
+  };
+
+  function updateStartingSideButton() {
+
+    startingSideButton.innerHTML = checkerboardIcons[startingSide];
+
+    if (startingSide === "default") {
+      startingSideButton.setAttribute("aria-label", "Default");
+      startingSideButton.title = "Using Default Puzzle Color";
+    } else if (startingSide === "w") {
+      startingSideButton.setAttribute("aria-label", "White to Play");
+      startingSideButton.title = "All Puzzles as White";
+    } else {
+      startingSideButton.setAttribute("aria-label", "Black to Play");
+      startingSideButton.title = "All Puzzles as Black";
+    }
+  }
+
+  updateStartingSideButton();
+
+  startingSideButton.addEventListener("click", async () => {
+    const currentIndex = startingSides.indexOf(startingSide);
+    startingSide = startingSides[(currentIndex + 1) % startingSides.length];
+    updateStartingSideButton();
+    await reloadCurrentPuzzle(element);
+  });
+
+
+
   menu.appendChild(decksButton);
   menu.appendChild(audioButton);
   menu.appendChild(exportButton);
+  menu.appendChild(startingSideButton);
 
   preboardLeft.appendChild(menu);
 }
