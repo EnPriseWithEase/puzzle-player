@@ -12,7 +12,8 @@
     "@mliebelt/pgn-parser": "^1.4.19",
     "chess.js": "^1.4.0",
     "chessground": "^9.2.1",
-    "sql.js": "^1.14.2"
+    "sql.js": "^1.14.2",
+    "stockfish": "^19.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",

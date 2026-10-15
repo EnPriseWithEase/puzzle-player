@@ -1,7 +1,7 @@
 CREATE TABLE deck (
   id            integer PRIMARY KEY NOT NULL,
-  name          text NOT NULL,
   folder        text,
+  name          text NOT NULL,
   config        text,
 
   UNIQUE (name, folder)

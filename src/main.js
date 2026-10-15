@@ -3,6 +3,7 @@ import { getDeckPuzzles, getDecks, writeReview, updateDeckPuzzleStatus, } from "
 import { loadPgn, getStartingSide } from "./pgn";
 import { runPuzzle, getFen as getStandardFen } from "./puzzle-standard";
 import { runCandidatePuzzle, getFen as getCandidatesFen } from "./puzzle-candidates";
+import { runStockfishPuzzle, getFen as getStockfishFen } from "./puzzle-stockfish";
 import { runViewer, getFen as getViewerFen } from "./puzzle-viewer";
 import { createPuzzleTimer, startPuzzleTimer } from "./timer";
 import { initAudio, setAudioMuted, isAudioMuted } from "./audio";
@@ -20,6 +21,7 @@ let puzzleID = null;
 let getCurrentFen = null;
 let timer;
 let startingSide = "default" ;
+let pgn;
 
 export async function run(element) {
   initAudio(false);
@@ -138,7 +140,7 @@ async function startPuzzles(element, session) {
     const pgnStartingSide = getStartingSide(puzzle.pgn);
 
     const mirror = startingSide !== "default" && startingSide !== pgnStartingSide;
-    const pgn = loadPgn(puzzle.pgn, { mirror });
+    pgn = loadPgn(puzzle.pgn, { mirror });
 
     window.pgn = pgn;
 
@@ -203,7 +205,24 @@ async function startPuzzles(element, session) {
     } else if (currentDeckConfig.puzzle_type === "standard") {
       getCurrentFen = getStandardFen;
       await runPuzzle(cgWrap, pgn, {onViewSolution,abortSignal});
+    } else if (currentDeckConfig.puzzle_type === "engine") {
+      getCurrentFen = getStockfishFen;
+      const gamePgn = await runStockfishPuzzle(cgWrap, pgn, {
+        maxMoves: 20,
+        targetEval: -200,
+        engineOptions: {
+          Threads: 1,
+          Hash: 32,
+          depth: 12,
+        },
+        abortSignal,
+        onViewSolution,
+      });
 
+      if (gamePgn) {
+        pgn = loadPgn(gamePgn);
+	window.pgn = pgn;
+      }
     }
 
     // User may have switched decks while the puzzle was running.

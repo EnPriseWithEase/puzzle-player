@@ -1,0 +1,26 @@
+<script>
+  const engine = new Worker(
+    "/assets/stockfish/stockfish-19-lite-single.js"
+  );
+
+  engine.onmessage = ({ data }) => {
+    console.log("Stockfish:", data);
+
+    if (data === "uciok") {
+      engine.postMessage("isready");
+    } else if (data === "readyok") {
+      console.log("Stockfish initialized successfully!");
+      engine.postMessage("position startpos");
+      engine.postMessage("go depth 10");
+    } else if (String(data).startsWith("bestmove ")) {
+      console.log("Engine test complete:", data);
+    }
+  };
+
+  engine.onerror = (error) => {
+    console.error("Stockfish failed to load:", error);
+  };
+
+  engine.postMessage("uci");
+</script>
+

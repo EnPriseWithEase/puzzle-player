@@ -40,6 +40,22 @@ export const reviewSession = {
     }
   },
 
+  logGameAttempt(correct, attempt) {
+    const elapsed = Date.now() - this.inittime;
+
+    this.attempts.push({
+      attempt,
+      correct,
+      elapsed,
+    });
+
+    if (correct) {
+      this.numright++;
+    } else {
+      this.numwrong++;
+    }
+  },
+
   markIncorrect() {
     this.result = 0;
   },

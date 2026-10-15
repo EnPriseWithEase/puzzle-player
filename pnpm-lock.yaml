@@ -26,6 +26,9 @@ importers:
       sql.js:
         specifier: ^1.14.2
         version: 1.14.2
+      stockfish:
+        specifier: ^19.0.1
+        version: 19.0.1
     devDependencies:
       '@capacitor/cli':
         specifier: ^8.5.2
@@ -642,6 +645,10 @@ packages:
 
   sql.js@1.14.2:
     resolution: {integrity: sha512-3ZGPovObMFrdw79zrUHbfdE/DLIsy8jdNdssmMSQuRAymedU6q84asPt0kgiqrdMYlPegDItiIMfmIXzZnYFcw==}
+
+  stockfish@19.0.1:
+    resolution: {integrity: sha512-bTwsO4e9HAwPBKls1+szcfibmaWRNzTF20rQE/XPdB3LOSoT6XTZDr1zYwriwSRRFT5MkvqrglPmJrKEVXGnyQ==}
+    hasBin: true
 
   stream-buffers@2.2.0:
     resolution: {integrity: sha512-uyQK/mx5QjHun80FLJTfaWE7JtwfRMKBLkMne6udYOmvH0CawotVa7TfgYHzAnpphn4+TweIx1QKMnRIbipmUg==}
@@ -1383,6 +1390,8 @@ snapshots:
   split2@4.2.0: {}
 
   sql.js@1.14.2: {}
+
+  stockfish@19.0.1: {}
 
   stream-buffers@2.2.0: {}
 
