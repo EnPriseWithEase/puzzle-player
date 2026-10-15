@@ -401,6 +401,14 @@ button.promotion-piece img {
   height: 32px;
 }
 
+.menu-item.no-active-background {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-item.no-active-background:active {
+  background: transparent;
+}
+
 #puzzle-timer {
   color: #d7dee9;
   font-family: "Roboto", sans-serif;

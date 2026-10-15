@@ -1,6 +1,6 @@
 INSERT INTO deck (name, config, folder)
 VALUES
-    ('Mate in One',      '{"puzzle_type":"standard","review_order":"sequential","retain":"none"}', 'Polgar Book'),
+    ('Mate in One',      '{"puzzle_type":"standard","review_order":"random","retain":"none"}', 'Polgar Book'),
     ('Mate in Two',      '{"puzzle_type":"standard","review_order":"sequential","retain":"none"}', 'Polgar Book'),
     ('Mate in Three',    '{"puzzle_type":"standard","review_order":"sequential","retain":"none"}', 'Polgar Book');
 

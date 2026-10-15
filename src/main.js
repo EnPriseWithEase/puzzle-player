@@ -298,7 +298,7 @@ function createMenu(element) {
 
   const decksButton = document.createElement("button");
   decksButton.type = "button";
-  decksButton.className = "menu-item";
+  decksButton.className = "menu-item no-active-background";
   //decksButton.textContent = "\u{265F}";
   //decksButton.textContent = "\u{1F0A0}";
   //decksButton.textContent = "♟";
@@ -310,6 +310,7 @@ function createMenu(element) {
   decksButton.appendChild(decksButtonIcon);
 
   decksButton.addEventListener("click", async () => {
+    //decksButton.blur(); // Forces the button to drop its active/green state immediately so not visible in overlay
     timer?.pause();
     await showDeckPicker(element, startDeck, suspendPuzzle);
     if (!document.hidden) { timer?.resume(); }
