@@ -342,6 +342,8 @@ function createMenu(element) {
   audioButton.addEventListener("click", () => {
     setAudioMuted(!isAudioMuted());
     updateAudioButton();
+    // trying to remove highlight focus in android after tap
+    //setTimeout(() => audioButton.blur(), 0);
   });
 
   const exportButton = document.createElement("button");
@@ -358,6 +360,8 @@ function createMenu(element) {
 
   exportButton.addEventListener("click", async () => {
     await exportDatabase();
+    // trying to remove highlight focus in android after tap
+    //setTimeout(() => exportButton.blur(), 0);
   });
 
   const startingSideButton = document.createElement("button");

@@ -374,12 +374,31 @@ button.promotion-piece img {
   transition: background-color 0.1s ease;
 }
 
-.menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+/* these must come before hover/active */
+/* added to prevent buttons from staying highlighted after selection */
+
+.menu-item:focus-visible {
+  outline: 2px solid #7fb069;
+  outline-offset: 1px;
+}
+/*
+.menu-item:focus:not(:focus-visible):not(:hover) {
+  outline: none;                                                            background: transparent;
+}
+*/
+@media (hover: hover) {
+  .menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
 }
 
 .menu-item:active {
   background: #557d38;
+}
+
+.menu-item svg {
+  width: 32px;
+  height: 32px;
 }
 
 #puzzle-timer {
@@ -409,7 +428,3 @@ button.promotion-piece img {
     "opsz" 24;
 }
 
-.menu-item svg {
-  width: 32px;
-  height: 32px;
-}
