@@ -25,7 +25,6 @@ export function runPuzzle(el, loadedPgn, options = {}) {
 
     const {
 	abortSignal = null,
-        opponentMovesFirst = false,
         onViewSolution = null,
     } = options;
 

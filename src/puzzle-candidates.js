@@ -24,12 +24,17 @@ let onAbortListener = null;
 let boardLocked;
 let puzzleFinished;
 
-export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
+export function runCandidatePuzzle(el, loadedPgn, options = {}) {
   return new Promise(resolve => {
 
     console.log("IN PUZZLE-CANDIDATES");
 
-    currentAbortSignal = signal;
+    const {
+        abortSignal = null,
+        onViewSolution = null,
+    } = options;
+
+    currentAbortSignal = abortSignal;
     boardLocked = false;
     puzzleFinished = false;
 
@@ -39,11 +44,6 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
     }
 
     resolvePuzzle = resolve;
-
-    const { 
-//      opponentMovesFirst = false,
-      onViewSolution = null,
-    } = options;
 
     pgn = loadedPgn;
 
@@ -58,7 +58,7 @@ export function runCandidatePuzzle(el, loadedPgn, options = {}, signal = null) {
 
     if (currentAbortSignal) {
       onAbortListener = onAbort;
-      signal.addEventListener("abort", onAbortListener, { once: true });
+      currentAbortSignal.addEventListener("abort", onAbortListener, { once: true });
     }
 
     cg = Chessground(el, {
