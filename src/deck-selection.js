@@ -133,7 +133,7 @@ async function refreshDeckList(
     );
   }
 
-  addPuzzleActions(
+  addAppTools(
     list,
     onSuspendPuzzle,
     closeButton
@@ -274,18 +274,18 @@ function addDeck(
   container.appendChild(row);
 }
 
-function addPuzzleActions(
+function addAppTools(
   container,
   onSuspendPuzzle,
   closeButton
 ) {
   const section = document.createElement("div");
-  section.className = "folder-section puzzle-actions-section";
+  section.className = "folder-section app-toolss-section";
 
   const folderButton = document.createElement("button");
   folderButton.type = "button";
   folderButton.className = "folder-button";
-  folderButton.textContent = "▸  Puzzle Actions";
+  folderButton.textContent = "▸  App Tools";
 
   const contents = document.createElement("div");
   contents.className = "folder-contents";
@@ -295,13 +295,13 @@ function addPuzzleActions(
     contents.hidden = !contents.hidden;
 
     folderButton.textContent = contents.hidden
-      ? "▸  Puzzle Actions"
-      : "▾  Puzzle Actions";
+      ? "▸  App Tools"
+      : "▾  App Tools";
   });
 
   const suspendButton = document.createElement("button");
   suspendButton.type = "button";
-  suspendButton.className = "deck-button puzzle-action-button";
+  suspendButton.className = "deck-button app-tools-button";
   suspendButton.textContent = "Suspend puzzle";
 
   suspendButton.addEventListener("click", async () => {
@@ -313,7 +313,7 @@ function addPuzzleActions(
 
   const exportButton = document.createElement("button");
   exportButton.type = "button";
-  exportButton.className = "deck-button puzzle-action-button";
+  exportButton.className = "deck-button app-tools-button";
   exportButton.textContent = "Export database";
 
   exportButton.addEventListener("click", async () => {

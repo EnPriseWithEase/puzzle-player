@@ -177,12 +177,12 @@
   cursor: default;
 }
 
-.puzzle-actions-section {
+.app-tools-section {
   margin-top: 16px;
   border-top: 1px solid #505050;
 }
 
-.puzzle-action-button {
+.app-tools-button {
   width: 100%;
 }
 
