@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Puzzle Player</string>
+    <string name="title_activity_main">Puzzle Player</string>
+    <string name="package_name">com.enprisewithease.puzzleplayer</string>
+    <string name="custom_url_scheme">com.enprisewithease.puzzleplayer</string>
+</resources>

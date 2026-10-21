@@ -1,0 +1,162 @@
+/* ==========================================================================
+   Variables & Font Face
+   ========================================================================== */
+
+@font-face {
+  font-family: "Material Icons";
+  font-style: normal;
+  font-weight: 400;
+/*  src: url("./fonts/_materialicons.woff2") format("woff2"); */
+  src: url("./fonts/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].woff2")
+    format("woff2");
+}
+
+.material-icons {
+  display: inline-block;
+  font-family: "Material Icons";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-icons.md-small {
+  font-size: 32px;
+}
+
+/* ==========================================================================
+   Navigation Buttons
+   ========================================================================== */
+
+/* #postboard itself is laid out by the main stylesheet.  */
+
+button.navBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 1 1 0;
+
+  width: 0;
+  min-width: 0;
+
+  aspect-ratio: 1 / 1;
+
+  max-height: calc(100% - 12px);
+  height: auto;
+
+  margin: 0 3px;
+  padding: 0;
+
+  box-sizing: border-box;
+
+  border: 1px solid #111;
+  border-radius: 4px;
+
+  background: #242424;
+  color: #d7dee9;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.1s ease,
+    color 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+/* Remove margin on the outer edges */
+button.navBtn:first-child {
+  margin-left: 0;
+}
+
+button.navBtn:last-child {
+  margin-right: 0;
+}
+
+/* Ensure SVG fills/strokes inherit color and transition smoothly */
+button.navBtn svg,
+button.navBtn svg.lichess-icon,
+button.navBtn svg.lichess-icon path {
+  fill: currentColor;
+  stroke: currentColor;
+  transition: fill 0.1s ease, stroke 0.1s ease;
+}
+
+/* hover state only for desktop/prevents persistent hover on android */
+@media (hover: hover) {
+  button.navBtn:hover:not(:disabled) {
+    background: #d6d6d6;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* instant tactile feedback for desktop click and mobile tap */
+button.navBtn:active:not(:disabled) {
+  background: #557d38;
+  color: #fff;
+}
+
+/* keyboard focus ring only (mouse clicks won't leave persistent outline) */
+button.navBtn:focus-visible {
+  outline: 2px solid #7fb069;
+  outline-offset: 1px;
+}
+
+/* reset mouse click focus back to default background */
+button.navBtn:focus:not(:focus-visible) {
+  outline: none;
+  background: #242424;
+  color: #d7dee9;
+}
+
+button.navBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+button.navBtn.active-toggle {
+  background: #a5d6a7;
+  color: #2c2c2c;
+
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   Navigation Icons
+   ========================================================================== */
+
+/*
+ * Each button is a CSS container.
+ *
+ * The icon size is based on the button's own width rather than the
+ * viewport. This keeps the icon proportional when the buttons grow.
+ */
+
+button.navBtn {
+  container-type: inline-size;
+}
+
+button.navBtn .material-icons {
+  font-size: clamp(24px, 55cqw, 56px);
+  line-height: 1;
+}
+
+button.navBtn svg,
+.lichess-icon,
+.stockfish-icon {
+  width: clamp(14px, 55cqw, 34px);
+  height: clamp(14px, 55cqw, 34px);
+
+  display: block;
+}
+

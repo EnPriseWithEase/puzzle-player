@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#d7dee9">
+  <!-- Screen Outer Frame (Transparent Center) -->
+  <rect x="80" y="-840" width="800" height="560" rx="40" ry="40" fill="none" stroke="#d7dee9" stroke-width="80"/>
+
+  <!-- Center Wave Graphic (Shifted Down) -->
+  <path d="M410-420q74 0 142.5-26T672-526q6 42 44 64t84 22v-200q-46 0-84 22.5T672-552q-53-52-120.5-80T410-660q-79 0-152 27.5T140-540q45 65 118 92.5T410-420Z"/>
+
+  <!-- Stand Bottom Bar -->
+  <rect x="120" y="-120" width="720" height="60"/>
+</svg>

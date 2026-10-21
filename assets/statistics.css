@@ -1,0 +1,76 @@
+.statistics-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #444);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: "Roboto", sans-serif;
+  color: #d7dee9;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.statistics-heading {
+  margin: 0;
+  padding: 0 12px 0 16px;
+  font-family: "Roboto", sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #d7dee9;
+}
+
+.statistics-calendar-container {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px;
+}
+
+.statistics-calendar {
+  display: grid;
+  grid-template-columns: repeat(53, minmax(0, 1fr));
+  grid-template-rows: repeat(7, auto);
+  grid-auto-flow: column;
+  gap: clamp(1px, 0.5vw, 3px);
+  width: 100%;
+}
+
+.statistics-day {
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: #343434;
+  box-sizing: border-box;
+}
+
+.statistics-day[data-level="1"] {
+  background: #9be9a8;
+}
+
+.statistics-day[data-level="2"] {
+  background: #40c463;
+}
+
+.statistics-day[data-level="3"] {
+  background: #30a14e;
+}
+
+.statistics-day[data-level="4"] {
+  background: #216e39;
+}
+
+.todays-statistics {
+  padding: 8px 12px 0 16px;
+  color: #9fa8b5;
+  font-family: "Roboto", sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre-line;
+}
+

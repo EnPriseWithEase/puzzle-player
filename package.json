@@ -1,0 +1,34 @@
+{
+  "name": "puzzle-player",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Puzzle Player",
+  "main": "dist/puzzle-player.js",
+  "author": "EnPriseWithEase",
+  "license": "",
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@mliebelt/pgn-parser": "^1.4.19",
+    "chess.js": "^1.4.0",
+    "chessground": "^9.2.1",
+    "sql.js": "^1.14.2",
+    "stockfish": "^19.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@rollup/plugin-commonjs": "^19",
+    "@rollup/plugin-node-resolve": "^13",
+    "http-server": "^14.1",
+    "prettier": "^3",
+    "rollup": "^2"
+  },
+  "scripts": {
+    "build": "rollup --config && node build.mjs",
+    "watch": "rollup --config --watch",
+    "serve": "http-server",
+    "format": "prettier --write .",
+    "check-format": "prettier --check ."
+  },
+  "packageManager": "pnpm@9.2.0+sha512.98a80fd11c2e7096747762304106432b3ddc67dcf54b5a8c01c93f68a2cd5e05e6821849522a06fb76284d41a2660d5e334f2ee3bbf29183bf2e739b1dafa771"
+}
