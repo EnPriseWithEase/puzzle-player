@@ -18,6 +18,7 @@ let puzzleSession = 0;
 let currentAbortController = null;
 let cleanupCurrentTimer = null;
 let puzzleID = null;
+let puzzle_type = null;
 let getCurrentFen = null;
 let timer;
 let startingSide = "default" ;
@@ -29,6 +30,8 @@ export async function run(element) {
   createMenu(element);
 
   puzzleID = Number( new URLSearchParams(window.location.search).get("puzzle"));
+  puzzle_type = new URLSearchParams(window.location.search).get("type") ?? "standard";
+
 
   if (puzzleID) {
     puzzles = await dbQuery(
@@ -36,7 +39,7 @@ export async function run(element) {
       { params: [puzzleID] }
     );
 
-    currentDeckConfig = { puzzle_type: "standard", retain: "all" };
+    currentDeckConfig = { puzzle_type: puzzle_type, retain: "all" };
 
     puzzleIndex = 0;
     const session = ++puzzleSession;
@@ -208,7 +211,7 @@ async function startPuzzles(element, session) {
     } else if (currentDeckConfig.puzzle_type === "engine") {
       getCurrentFen = getStockfishFen;
       const gamePgn = await runStockfishPuzzle(cgWrap, pgn, {
-        maxMoves: 20,
+        maxMoves: 500,
         targetEval: -200,
         engineOptions: {
           Threads: 1,
