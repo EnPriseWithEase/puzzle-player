@@ -23,6 +23,10 @@ let getCurrentFen = null;
 let timer;
 let startingSide = "default" ;
 let pgn;
+// moved to module scope from createMenu
+// allows startDeck to set a per deck default of startingSide
+let startingSideButton = null;
+
 
 export async function run(element) {
   initAudio(false);
@@ -66,6 +70,9 @@ async function startDeck(deckId, element) {
   const deck = decks.find(deck => deck.id === deckId);
 
   currentDeckConfig = deck.config ?? {};
+
+  startingSide = currentDeckConfig.starting_side ?? "default";
+  updateStartingSideButton();
 
   puzzles = await getDeckPuzzles(deckId);
 
@@ -387,33 +394,11 @@ function createMenu(element) {
     await reloadCurrentPuzzle(element);
   });
 
-  const startingSideButton = document.createElement("button");
+  startingSideButton = document.createElement("button");
   startingSideButton.type = "button";
   startingSideButton.className = "menu-item";
  
   const startingSides = ["default", "w", "b"];
-
-  const checkerboardIcons = {
-    "default": `<svg xmlns="http://www.w3.org/2000/svg" width="22.5" height="22.5" viewBox="-5 -5 90 90"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#dfe3e6" /> <rect x="20" width="20" height="20" fill="#8fa2ad" /> <rect y="20" width="20" height="20" fill="#8fa2ad" /> <rect x="20" y="20" width="20" height="20" fill="#dfe3e6" /> </pattern> </defs> <rect x="0" y="0" width="80" height="80" fill="url(#checkerboard)" /> <line x1="-5" y1="-5" x2="85" y2="85" stroke="#e73a94" stroke-width="8" /> </svg>`,
-    "w":       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 80 80"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#dfe3e6" /> <rect x="20" width="20" height="20" fill="#8fa2ad" /> <rect y="20" width="20" height="20" fill="#8fa2ad" /> <rect x="20" y="20" width="20" height="20" fill="#dfe3e6" /> </pattern> </defs> <rect width="100%" height="100%" fill="url(#checkerboard)" /> </svg>`,
-    "b":       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 80 80"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#8fa2ad" /> <rect x="20" width="20" height="20" fill="#1f1f1f" /> <rect y="20" width="20" height="20" fill="#1f1f1f" /> <rect x="20" y="20" width="20" height="20" fill="#8fa2ad" /> </pattern> </defs> <rect width="100%" height="100%" fill="url(#checkerboard)" /> </svg>`
-  };
-
-  function updateStartingSideButton() {
-
-    startingSideButton.innerHTML = checkerboardIcons[startingSide];
-
-    if (startingSide === "default") {
-      startingSideButton.setAttribute("aria-label", "Default");
-      startingSideButton.title = "Using Default Puzzle Color";
-    } else if (startingSide === "w") {
-      startingSideButton.setAttribute("aria-label", "White to Play");
-      startingSideButton.title = "All Puzzles as White";
-    } else {
-      startingSideButton.setAttribute("aria-label", "Black to Play");
-      startingSideButton.title = "All Puzzles as Black";
-    }
-  }
 
   updateStartingSideButton();
 
@@ -434,3 +419,25 @@ function createMenu(element) {
   preboardLeft.appendChild(menu);
 }
 
+const checkerboardIcons = {
+    "default": `<svg xmlns="http://www.w3.org/2000/svg" width="22.5" height="22.5" viewBox="-5 -5 90 90"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#dfe3e6" /> <rect x="20" width="20" height="20" fill="#8fa2ad" /> <rect y="20" width="20" height="20" fill="#8fa2ad" /> <rect x="20" y="20" width="20" height="20" fill="#dfe3e6" /> </pattern> </defs> <rect x="0" y="0" width="80" height="80" fill="url(#checkerboard)" /> <line x1="-5" y1="-5" x2="85" y2="85" stroke="#e73a94" stroke-width="8" /> </svg>`,
+    "w":       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 80 80"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#dfe3e6" /> <rect x="20" width="20" height="20" fill="#8fa2ad" /> <rect y="20" width="20" height="20" fill="#8fa2ad" /> <rect x="20" y="20" width="20" height="20" fill="#dfe3e6" /> </pattern> </defs> <rect width="100%" height="100%" fill="url(#checkerboard)" /> </svg>`,
+    "b":       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 80 80"> <defs> <pattern id="checkerboard" width="40" height="40" patternUnits="userSpaceOnUse"> <rect width="20" height="20" fill="#8fa2ad" /> <rect x="20" width="20" height="20" fill="#1f1f1f" /> <rect y="20" width="20" height="20" fill="#1f1f1f" /> <rect x="20" y="20" width="20" height="20" fill="#8fa2ad" /> </pattern> </defs> <rect width="100%" height="100%" fill="url(#checkerboard)" /> </svg>`
+};
+
+
+function updateStartingSideButton() {
+
+  startingSideButton.innerHTML = checkerboardIcons[startingSide];
+
+  if (startingSide === "default") {
+    startingSideButton.setAttribute("aria-label", "Default");
+    startingSideButton.title = "Using Default Puzzle Color";
+  } else if (startingSide === "w") {
+    startingSideButton.setAttribute("aria-label", "White to Play");
+    startingSideButton.title = "All Puzzles as White";
+  } else {
+    startingSideButton.setAttribute("aria-label", "Black to Play");
+    startingSideButton.title = "All Puzzles as Black";
+  }
+}
