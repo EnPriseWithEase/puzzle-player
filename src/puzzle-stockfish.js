@@ -7,6 +7,8 @@ import {
   legalDests,
   handleMoveWithPromotion,
   createViewSolutionButton,
+  selectRandomLine,
+  selectLongestDraw,
 } from "./util.js";
 import { changeAudio, playSound } from "./audio.js";
 import { createStockfish } from "./stockfish.js";
@@ -14,7 +16,6 @@ import { createStockfish } from "./stockfish.js";
 let cg;
 let chess;
 let engine;
-let promotion;
 let resolvePuzzle;
 let rejectPuzzle;
 let viewSolutionButtonClicked;
@@ -34,6 +35,7 @@ let maxMoves;
 let targetEval;
 let searchOptions;
 let endingReason;
+let cpThreshold;
 
 export function runStockfishPuzzle(el, loadedPgn, options = {}) {
   return new Promise((resolve, reject) => {
@@ -43,10 +45,12 @@ export function runStockfishPuzzle(el, loadedPgn, options = {}) {
       targetEval: targetEvalOption = -200,
       engineOptions = {},
       onViewSolution = null,
+      cpThreshold: cpThresholdOption = 35,
     } = options;
 
     maxMoves = maxMovesOption;
     targetEval = targetEvalOption;
+    cpThreshold = cpThresholdOption;
 
     currentAbortSignal = abortSignal;
     viewSolutionButtonClicked = false;
@@ -251,7 +255,13 @@ async function handleMove(orig, dest, promotion = undefined) {
       return;
     }
 
-    if (!result.bestMove) {
+    let selectedLine = null;
+    //selectedLine = selectRandomLine(result.lines, cpThreshold, chess.turn());
+    //selectedLine = selectLongestDraw(result.lines, chess.fen(), chess.turn());
+
+    const selectedMove = selectedLine?.bestMove ?? result.bestMove;
+
+    if (!selectedMove) {
       if (chess.isGameOver()) {
         endingReason = "game-over";
         await finishPuzzle();
@@ -262,10 +272,10 @@ async function handleMove(orig, dest, promotion = undefined) {
     }
 
     const engineMove = chess.move({
-      from: result.bestMove.from,
-      to: result.bestMove.to,
-      ...(result.bestMove.promotion
-        ? { promotion: result.bestMove.promotion }
+      from: selectedMove.from,
+      to: selectedMove.to,
+      ...(selectedMove.promotion
+        ? { promotion: selectedMove.promotion }
         : {}),
     });
 
@@ -356,6 +366,21 @@ function isAboveFailureThreshold() {
 }
 
 function isAttemptCorrect() {
+
+// debug
+const sign = playerColor === "white" ? 1 : -1;
+console.log("DRAW GRADING", {
+  initialFen,
+  initialEval,
+  playerColor,
+  endingReason,
+  isDraw: chess.isDraw(),
+  isGameOver: chess.isGameOver(),
+  result: chess.isDraw() &&
+    initialEval !== null &&
+    initialEval*sign <= 100
+});
+
   if (endingReason === "game-over") {
     if (chess.isCheckmate()) {
       // chess.turn() is the side that was checkmated.
@@ -363,8 +388,8 @@ function isAttemptCorrect() {
     }
 
     if (chess.isDraw()) {
-      return initialEval !== null &&
-        Math.abs(initialEval) <= 100;
+      const sign = playerColor === "white" ? 1 : -1;
+      return initialEval !== null && initialEval * sign <= 100;
     }
 
     return false;

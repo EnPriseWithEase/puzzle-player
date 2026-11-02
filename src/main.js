@@ -215,8 +215,8 @@ async function startPuzzles(element, session) {
         targetEval: -200,
         engineOptions: {
           Threads: 1,
-          Hash: 32,
-          depth: 12,
+          Hash: 128,
+          depth: 20,
         },
         abortSignal,
         onViewSolution,

@@ -1,3 +1,4 @@
+
 export function createStockfish({
   workerPath = "/assets/stockfish/stockfish-19-lite-single.js",
   engineOptions = {},
@@ -7,6 +8,8 @@ export function createStockfish({
   let activeSearch = null;
   let destroyed = false;
 
+  let currentEngineOptions = { ...engineOptions };
+
   function send(command) {
     if (!worker || destroyed) {
       throw new Error("Stockfish worker is not available");
@@ -15,46 +18,51 @@ export function createStockfish({
     worker.postMessage(command);
   }
 
-  function parseBestMove(message) {
-    const match = message.match(
-      /^bestmove\s+(\S+)(?:\s+ponder\s+(\S+))?/
+  function setOptions(options = {}) {
+    if (destroyed) {
+      throw new Error("Stockfish has been destroyed");
+    }
+
+    if (activeSearch) {
+      throw new Error(
+        "Cannot change engine options while a search is running"
+      );
+    }
+
+    Object.assign(currentEngineOptions, options);
+
+    // Options are stored now and sent during initialization.
+    if (!worker || !initPromise) return;
+
+    for (const [name, value] of Object.entries(options)) {
+      send(`setoption name ${name} value ${value}`);
+    }
+  }
+
+  function getOptions() {
+    return { ...currentEngineOptions };
+  }
+
+  function parseBestMove(uci) {
+    if (!uci || uci === "(none)" || uci === "0000") {
+      return null;
+    }
+
+    const match = uci.match(
+      /^([a-h][1-8])([a-h][1-8])([qrbn])?$/
     );
 
     if (!match) return null;
 
-    const uci = match[1];
-
-    if (uci === "(none)" || uci === "0000") {
-      return null;
-    }
-
-    const moveMatch = uci.match(
-      /^([a-h][1-8])([a-h][1-8])([qrbn])?$/
-    );
-
-    if (!moveMatch) return null;
-
     return {
-      from: moveMatch[1],
-      to: moveMatch[2],
-      ...(moveMatch[3]
-        ? { promotion: moveMatch[3] }
-        : {}),
+      from: match[1],
+      to: match[2],
+      ...(match[3] ? { promotion: match[3] } : {}),
       uci,
     };
   }
 
-  function parseEvaluation(message, fen) {
-    // Use the most recent score in the current search.
-    const matches = [
-      ...message.matchAll(
-        /\bscore\s+(cp|mate)\s+(-?\d+)\b/g
-      ),
-    ];
-
-    if (!matches.length) return null;
-
-    const [, type, rawValue] = matches[matches.length - 1];
+  function parseEvaluation(type, rawValue, fen) {
     const value = Number(rawValue);
 
     // UCI scores are from the root side-to-move perspective.
@@ -77,6 +85,67 @@ export function createStockfish({
     };
   }
 
+  function parseInfo(message, fen) {
+    // Bound scores are not exact evaluations.
+    if (/\b(?:lowerbound|upperbound)\b/.test(message)) {
+      return null;
+    }
+
+    const depthMatch = message.match(/\bdepth\s+(\d+)/);
+    const multipvMatch = message.match(/\bmultipv\s+(\d+)/);
+
+    const scoreMatches = [
+      ...message.matchAll(
+        /\bscore\s+(cp|mate)\s+(-?\d+)\b/g
+      ),
+    ];
+
+    const pvMatch = message.match(/\bpv\s+(.+)$/);
+
+    if (!depthMatch || !scoreMatches.length || !pvMatch) {
+      return null;
+    }
+
+    const depth = Number(depthMatch[1]);
+    const multipv = multipvMatch
+      ? Number(multipvMatch[1])
+      : 1;
+
+    const [, type, rawValue] =
+      scoreMatches[scoreMatches.length - 1];
+
+    const evaluation = parseEvaluation(
+      type,
+      rawValue,
+      fen
+    );
+
+    // Extract only valid UCI moves, ignoring trailing statistics.
+    const pv = [];
+
+    for (const token of pvMatch[1].trim().split(/\s+/)) {
+      if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(token)) {
+        break;
+      }
+
+      pv.push(token);
+    }
+
+    if (pv.length === 0) return null;
+
+    const bestMove = parseBestMove(pv[0]);
+
+    if (!bestMove) return null;
+
+    return {
+      multipv,
+      depth,
+      evaluation,
+      pv,
+      bestMove,
+    };
+  }
+
   function handleMessage(event) {
     const message = String(event.data).trim();
 
@@ -94,18 +163,40 @@ export function createStockfish({
     if (!search) return;
 
     if (message.startsWith("info ")) {
-      // Keep the latest usable score, preferring deeper searches.
-      const evaluation = parseEvaluation(message, search.fen);
+      const line = parseInfo(message, search.fen);
 
-      if (evaluation) {
-        const depthMatch = message.match(/\bdepth\s+(\d+)/);
-        const depth = depthMatch ? Number(depthMatch[1]) : 0;
+      if (!line) return;
 
-        if (depth >= search.latestDepth) {
-          search.latestDepth = depth;
-          search.evaluation = evaluation;
-        }
+      if (line.depth < search.currentDepth) {
+        return;
       }
+
+      // A new depth starts with multipv 1.
+      if (
+        line.depth > search.currentDepth ||
+        (
+          line.depth === search.currentDepth &&
+          line.multipv === 1 &&
+          search.currentLines.has(1)
+        )
+      ) {
+        // Preserve the previous iteration's candidates.
+        if (
+          search.currentDepth >= 0 &&
+          search.currentLines.size > 0
+        ) {
+          search.completedLines = [
+            ...search.currentLines.values(),
+          ];
+
+          search.completedDepth = search.currentDepth;
+        }
+
+        search.currentDepth = line.depth;
+        search.currentLines = new Map();
+      }
+
+      search.currentLines.set(line.multipv, line);
 
       return;
     }
@@ -113,9 +204,34 @@ export function createStockfish({
     if (message.startsWith("bestmove ")) {
       activeSearch = null;
 
+      // Use the final iteration when available.
+      const lines = search.currentLines.size
+        ? [...search.currentLines.values()].sort(
+            (a, b) => a.multipv - b.multipv
+          )
+        : search.completedLines.sort(
+            (a, b) => a.multipv - b.multipv
+          );
+
+      // The final bestmove message is authoritative.
+      const bestMoveMatch = message.match(
+        /^bestmove\s+(\S+)(?:\s+ponder\s+(\S+))?/
+      );
+
+      const bestMove = bestMoveMatch
+        ? parseBestMove(bestMoveMatch[1])
+        : null;
+
+      // Evaluation comes from the first MultiPV candidate.
+      const bestLine = lines.find(
+        line => line.multipv === 1
+      ) ?? null;
+
       search.resolve({
-        bestMove: parseBestMove(message),
-        evaluation: search.evaluation,
+        bestMove,
+        evaluation: bestLine?.evaluation ?? null,
+        lines,
+        depth: lines[0]?.depth ?? null,
         stopped: search.stopped,
       });
     }
@@ -137,7 +253,7 @@ export function createStockfish({
     initPromise.promise = new Promise((resolve, reject) => {
       initPromise.uciResolve = () => {
         try {
-          for (const [name, value] of Object.entries(engineOptions)) {
+          for (const [name, value] of Object.entries(currentEngineOptions)) {
             send(`setoption name ${name} value ${value}`);
           }
 
@@ -156,9 +272,7 @@ export function createStockfish({
           event.message || "Stockfish worker error"
         );
 
-        if (initPromise) {
-          initPromise.reject?.(error);
-        }
+        initPromise?.reject?.(error);
 
         if (activeSearch) {
           activeSearch.reject(error);
@@ -193,8 +307,10 @@ export function createStockfish({
         fen,
         resolve,
         reject,
-        evaluation: null,
-        latestDepth: -1,
+        currentDepth: -1,
+        currentLines: new Map(),
+        completedLines: [],
+        completedDepth: -1,
         stopped: false,
       };
 
@@ -239,6 +355,7 @@ export function createStockfish({
       activeSearch.reject(
         new Error("Stockfish worker was destroyed")
       );
+
       activeSearch = null;
     }
 
@@ -254,6 +371,8 @@ export function createStockfish({
     evaluate,
     stop,
     destroy,
+    setOptions,
+    getOptions,
   };
 }
 
