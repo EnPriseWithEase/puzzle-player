@@ -11,6 +11,7 @@ CREATE TABLE deck (
 --   puzzle_type:    "standard",           // standard, candidates
 --   review_order:   "random",             // sequential, random
 --   retain:         "incorrect",          // none, all, incorrect
+--   starting_side:  "white",              // default, white, black
 -- }
 
 CREATE TABLE review (
